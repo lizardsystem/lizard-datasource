@@ -9,8 +9,14 @@ long_description = '\n\n'.join([
     ])
 
 install_requires = [
+    'Django',
+    'lizard-map >= 4.0a1',
+    'lizard-ui >= 4.0a1',
+    'lizard-security',
+    'django-nose',
     'setuptools',
     'mock',
+    'south',
     ],
 
 tests_require = [
