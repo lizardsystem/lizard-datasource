@@ -10,12 +10,13 @@ long_description = '\n\n'.join([
 
 install_requires = [
     'setuptools',
+    'mock',
     ],
 
 tests_require = [
     ]
 
-setup(name='lizard-datasource',
+setup(name='lizard_datasource',
       version=version,
       description="TODO",
       long_description=long_description,
