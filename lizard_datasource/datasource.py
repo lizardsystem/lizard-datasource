@@ -24,17 +24,6 @@ COLLAPSED_FLEXIBILITY = object()
 #          combined" data source is returned.
 
 
-class Criterion(object):
-    TYPE_SELECT = object()
-
-    def __init__(self, identifier, description,
-                 datatype=TYPE_SELECT, prerequisites=()):
-        self.identifier = identifier
-        self.description = description
-        self.datatype = datatype
-        self.prerequisites = prerequisites
-
-
 class ChoicesMade(object):
     """Represents a set of choices made. Dict-like.
 
@@ -57,6 +46,9 @@ class ChoicesMade(object):
                 self._choices['json'] = json
             if dict is not None:
                 self._choices['dict'] = dict
+
+        logger.debug(
+            "End of choices constructor. Dict is {0}.".format(self._choices))
 
     def __contains__(self, key):
         return key in self._choices
@@ -131,14 +123,11 @@ class DataSource(object):
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made
 
-    def criteria_names(self):
+    def criteria(self):
         return ()
 
-    def options_for_criterium(self, criterium):
+    def options_for_criterion(self, criterion):
         return ()
-
-    def choosable_criteria(self):
-        return self.criteria(flexibility=AVAILABLE_FLEXIBILITY)
 
     def choose(self, item, value):
         """Return a new datasource with the item selected."""
@@ -149,12 +138,12 @@ class DataSource(object):
         the forgotten item."""
         pass
 
-    def is_drawable(self):
-        """Returns True if this is a map layer that can be drawn."""
-        return False
-
     def is_applicable(self, choices_made):
         """Should this data source still be shown, given the choices made?"""
+        return False
+
+    def is_drawable(self, choices_made):
+        """Can a datasource with these choices made be drawn on the map?"""
         return False
 
 
@@ -189,23 +178,63 @@ def get_datasources(choices_made=ChoicesMade()):
 
 class CombinedDataSource(DataSource):
     def __init__(self, choices_made=ChoicesMade()):
-        self._datasources = get_datasources(choices_made)
+        try:
+            self._datasources = get_datasources(choices_made)
+            logger.debug("Datasources: {0}".format(self._datasources))
+            self._choices_made = choices_made
+        except Exception, e:
+            logger.debug(e)
 
-    def criteria_names(self):
-        names = set()
-        for ds in self._datasources:
-            names = names.union(set(ds.criteria_names()))
-        return list(names)
+    def criteria(self):
+        try:
+            criteria = set()
+            for ds in self._datasources:
+                criteria = criteria.union(set(ds.criteria()))
+                logger.debug("Criteria: {0}".format(criteria))
+        except Exception, e:
+            logger.debug(e)
+        return list(criteria)
 
-    def options_for_criterium(self, criterium):
+    def options_for_criterion(self, criterion):
         options = set()
         for ds in self._datasources:
-            options = options.union(set(ds.options_for_criterium(criterium)))
+            options = options.union(set(ds.options_for_criterion(criterion)))
         return list(options)
 
     def chooseable_criteria(self):
-        return [{
-                'name': option,
-                'values': self.options_for_criterium(option)
-                } for option in self.criteria_names()
-                if len(self.options_for_criterium(option)) > 1]
+        all_criteria = self.criteria()
+        chosen_identifiers = set()
+        for criterion in all_criteria:
+            if (criterion.identifier in self._choices_made or
+                len(self.options_for_criterion(criterion)) == 1):
+                chosen_identifiers.add(criterion.identifier)
+
+        criteria = []
+        for criterion in all_criteria:
+            if criterion.identifier in self._choices_made:
+                # Already chosen
+                continue
+            if not all(identifier in chosen_identifiers
+                       for identifier in criterion.prerequisites):
+                # Not all prerequisites chosen
+                continue
+
+            options = self.options_for_criterion(criterion)
+            if len(options) > 1:
+                values = []
+                for option_id, option_desc in options:
+                    values.append({
+                            'identifier': option_id,
+                            'description': option_desc,
+                            })
+                criteria.append({
+                        'criterion': criterion,
+                        'values': values,
+                        })
+        return criteria
+
+    def is_drawable(self, choices_made):
+        # Return True if one of our constituents can draw itself given these
+        # choices
+        return any(ds.is_drawable(choices_made)
+                   for ds in self._datasources)
