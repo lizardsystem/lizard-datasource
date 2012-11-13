@@ -17,6 +17,7 @@ install_requires = [
     'setuptools',
     'mock',
     'south',
+    'pandas',
     ],
 
 tests_require = [
@@ -41,5 +42,9 @@ setup(name='lizard_datasource',
       extras_require = {'test': tests_require},
       entry_points={
           'console_scripts': [
-          ]},
+          ],
+          'lizard_datasource': [
+            'lizard_datasource = lizard_datasource.dummy_datasource:factory'
+            ],
+          }
       )

@@ -24,6 +24,12 @@ class Criterion(object):
     def prerequisites(self):
         return self._prerequisites
 
+    def __eq__(self, other):
+        return getattr(other, '_identifier', None) == self._identifier
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash(self._identifier)
 

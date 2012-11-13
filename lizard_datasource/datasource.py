@@ -4,10 +4,13 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
+import itertools
 import logging
 import pkg_resources
 
 from django.utils import simplejson
+
+from lizard_datasource import models
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +123,32 @@ class DataSource(object):
     they will just be iterables of possibilities.
     """
 
+    @property
+    def identifier(self):
+        return ''  # Only the base has the empty identifier
+
+    @property
+    def description(self):
+        return "Base datasource"
+
+    @property
+    def originating_app(self):
+        return 'lizard_datasource'
+
+    @property
+    def visible(self):
+        try:
+            dsm = models.DatasourceModel.objects.get(
+                identifier=self.identifier,
+                originating_app=self.originating_app)
+        except models.DatasourceModel.DoesNotExist:
+            dsm = models.DatasourceModel(
+                identifier=self.identifier,
+                originating_app=self.originating_app)
+            dsm.save()
+
+        return dsm.visible
+
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made
 
@@ -140,11 +169,43 @@ class DataSource(object):
 
     def is_applicable(self, choices_made):
         """Should this data source still be shown, given the choices made?"""
-        return False
+        own_criteria_identifiers = set(
+            criterion.identifier for criterion in self.criteria())
+        if any(choice_identifier not in own_criteria_identifiers
+               for choice_identifier in choices_made):
+            return False
+
+        return True
 
     def is_drawable(self, choices_made):
         """Can a datasource with these choices made be drawn on the map?"""
         return False
+
+    def has_property(self, property):
+        """Does the datasource have this property? See properties.py
+        for a list."""
+        return hasattr(self, 'PROPERTIES') and property in self.PROPERTIES
+
+    def locations(self):
+        """Should return an Exception if the datasource is not drawable.
+        Should return an Exception if the datasource is not LAYER_POINTS.
+
+        Returns an iterable of dictionaries:
+        {
+        'id': a unicode string identifying this locations,
+        'longitude': WGS84 longitude,
+        'latitude': WGS84 latitude
+        }
+
+        With optional extra fields.
+        """
+        return []
+
+    def timeseries(self, location_id, start_datetime=None, end_datetime=None):
+        """Return the relevant timeseries at that location id. Start
+        and end datetimes are in UTC. Results in a pandas timeseries
+        object, or None if there are no timeseries available."""
+        return None
 
 
 def datasource_entrypoints():
@@ -159,7 +220,8 @@ def datasources_from_entrypoints():
     for entrypoint in datasourcefactories:
         try:
             factory = entrypoint.load()
-            datasources += factory()
+            datasources += [datasource for datasource in factory()
+                            if datasource.visible]
         except ImportError, e:
             logger.debug(e)
 
@@ -231,10 +293,37 @@ class CombinedDataSource(DataSource):
                         'criterion': criterion,
                         'values': values,
                         })
+            elif len(options) == 1:
+                # It is still "chooseable" in a way if the resulting
+                # datasource can be drawn
+                option_id, option_desc = options[0]
+                resulting_choices = self._choices_made.add(
+                    criterion.identifier, option_id)
+                logger.debug("Resulting choices len options 1: {0}".
+                             format(resulting_choices))
+                if self.is_drawable(resulting_choices):
+                    criteria.append({
+                            'criterion': criterion,
+                            'values': [{
+                                    'identifier': option_id,
+                                    'description': option_desc
+                                    }]})
         return criteria
 
     def is_drawable(self, choices_made):
-        # Return True if one of our constituents can draw itself given these
-        # choices
+        """Return True if some of our constituents can draw themselves
+        given these choices"""
         return any(ds.is_drawable(choices_made)
                    for ds in self._datasources)
+
+    def has_property(self, property):
+        """CombinedDataSource has a property iff all the underlying
+        data sources have it."""
+        return all(ds.has_property(property)
+                   for ds in self._datasources)
+
+    def locations(self):
+        """Return locations from all the underlying datasources."""
+        return itertools.chain(*(
+            datasource.locations()
+            for datasource in self._datasources))
