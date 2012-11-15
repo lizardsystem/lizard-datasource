@@ -20,3 +20,9 @@ def utc(*args, **kwargs):
     """Pass args and kwargs to datetime.datetime, and turn it into a
     UTC datetime afterwards."""
     return to_utc(datetime.datetime(*args, **kwargs))
+
+
+def utc_now():
+    """Ironically, standard datetime's utc_now() returns a naive
+    time. We turn it into a UTC time."""
+    return to_utc(datetime.datetime.utcnow())

@@ -76,6 +76,7 @@ CITIES = {
 class DummyDataSource(datasource.DataSource):
     PROPERTIES = (
         properties.LAYER_POINTS,
+        properties.DATA_CAN_HAVE_VALUE_LAYER_SCRIPT
         )
 
     @property
@@ -97,6 +98,7 @@ class DummyDataSource(datasource.DataSource):
             )
 
     def options_for_criterion(self, criterion):
+        logger.debug(criterion)
         if criterion.identifier == 'appname':
             return (('lizard_datasource', 'Lizard-DataSource'),)
         if criterion.identifier == 'first_letter':
@@ -126,7 +128,7 @@ class DummyDataSource(datasource.DataSource):
         cities = CITIES[self._choices_made['first_letter']]
 
         return [{
-                'id': city['id'],
+                'identifier': city['id'],
                 'longitude': city['lon'] / 1000000.0,
                 'latitude': city['lat'] / 1000000.0
                 }

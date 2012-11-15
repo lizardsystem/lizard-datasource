@@ -41,7 +41,12 @@ class DatasourceLayer(models.Model):
     of each timeseries."""
 
     datasource_model = models.ForeignKey(DatasourceModel)
-    choices_made = models.TextField()  # To store JSON
+
+    # To store JSON. Note that the JSON for this field should ALWAYS
+    # be constructed with json.dumps(..., sort_keys=True) so that
+    # output of identical dictionaries will always result in identical
+    # JSON.
+    choices_made = models.TextField()
 
 
 class DatasourceCache(models.Model):
@@ -49,3 +54,13 @@ class DatasourceCache(models.Model):
     locationid = models.CharField(max_length=100)
     timestamp = models.DateTimeField()
     value = models.FloatField()
+
+
+class AugmentedDataSource(models.Model):
+    """Model holding the configuration of an AugmentedDataSource; see
+    augmented_datasource.py."""
+    augmented_source = models.ForeignKey(DatasourceModel)
+
+    def __unicode__(self):
+#        return "Augmented version of {0}.".format(self.augmented_source)
+        return "Augmented version of something.".format(self.augmented_source)

@@ -11,6 +11,7 @@ import pkg_resources
 from django.utils import simplejson
 
 from lizard_datasource import models
+from lizard_datasource.functools import memoize
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +51,6 @@ class ChoicesMade(object):
             if dict is not None:
                 self._choices['dict'] = dict
 
-        logger.debug(
-            "End of choices constructor. Dict is {0}.".format(self._choices))
-
     def __contains__(self, key):
         return key in self._choices
 
@@ -71,7 +69,7 @@ class ChoicesMade(object):
         return ChoicesMade(dict=choices)
 
     def json(self):
-        return simplejson.dumps(self._choices)
+        return simplejson.dumps(self._choices, sort_keys=True)
 
     def __unicode__(self):
         return "ChoicesMade(json={0})".format(
@@ -136,18 +134,39 @@ class DataSource(object):
         return 'lizard_datasource'
 
     @property
-    def visible(self):
-        try:
-            dsm = models.DatasourceModel.objects.get(
-                identifier=self.identifier,
-                originating_app=self.originating_app)
-        except models.DatasourceModel.DoesNotExist:
-            dsm = models.DatasourceModel(
-                identifier=self.identifier,
-                originating_app=self.originating_app)
-            dsm.save()
+    def datasource_model(self):
+        if not hasattr(self, '_dsm') or not self._dsm:
+            try:
+                self._dsm = models.DatasourceModel.objects.get(
+                    identifier=self.identifier,
+                    originating_app=self.originating_app)
+            except models.DatasourceModel.DoesNotExist:
+                self._dsm = models.DatasourceModel(
+                    identifier=self.identifier,
+                    originating_app=self.originating_app)
+                self._dsm.save()
+        return self._dsm
 
-        return dsm.visible
+    @property
+    def visible(self):
+        return self.datasource_model.visible
+
+    @property
+    def datasource_layer(self):
+        """Don't cache, because choices_made is mutated regularly."""
+        json = self._choices_made.json()
+        dsm = self.datasource_model
+
+        try:
+            return models.DatasourceLayer.objects.get(
+                datasource_model=dsm,
+                choices_made=json)
+        except models.DatasourceLayer.DoesNotExist:
+            dsl = models.DatasourceLayer(
+                datasource_model=dsm,
+                choices_made=json)
+            dsl.save()
+            return dsl
 
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made
@@ -157,111 +176,6 @@ class DataSource(object):
 
     def options_for_criterion(self, criterion):
         return ()
-
-    def choose(self, item, value):
-        """Return a new datasource with the item selected."""
-        pass
-
-    def forget(self, item):
-        """Return a new datasource, with criteria equal to the old ones minus
-        the forgotten item."""
-        pass
-
-    def is_applicable(self, choices_made):
-        """Should this data source still be shown, given the choices made?"""
-        own_criteria_identifiers = set(
-            criterion.identifier for criterion in self.criteria())
-        if any(choice_identifier not in own_criteria_identifiers
-               for choice_identifier in choices_made):
-            return False
-
-        return True
-
-    def is_drawable(self, choices_made):
-        """Can a datasource with these choices made be drawn on the map?"""
-        return False
-
-    def has_property(self, property):
-        """Does the datasource have this property? See properties.py
-        for a list."""
-        return hasattr(self, 'PROPERTIES') and property in self.PROPERTIES
-
-    def locations(self):
-        """Should return an Exception if the datasource is not drawable.
-        Should return an Exception if the datasource is not LAYER_POINTS.
-
-        Returns an iterable of dictionaries:
-        {
-        'id': a unicode string identifying this locations,
-        'longitude': WGS84 longitude,
-        'latitude': WGS84 latitude
-        }
-
-        With optional extra fields.
-        """
-        return []
-
-    def timeseries(self, location_id, start_datetime=None, end_datetime=None):
-        """Return the relevant timeseries at that location id. Start
-        and end datetimes are in UTC. Results in a pandas timeseries
-        object, or None if there are no timeseries available."""
-        return None
-
-
-def datasource_entrypoints():
-    """Use pkg_resources to find all the data sources."""
-
-    return tuple(pkg_resources.iter_entry_points(group="lizard_datasource"))
-
-
-def datasources_from_entrypoints():
-    datasourcefactories = datasource_entrypoints()
-    datasources = []
-    for entrypoint in datasourcefactories:
-        try:
-            factory = entrypoint.load()
-            datasources += [datasource for datasource in factory()
-                            if datasource.visible]
-        except ImportError, e:
-            logger.debug(e)
-
-    return datasources
-
-
-def get_datasources(choices_made=ChoicesMade()):
-    datasources = []
-    for datasource in datasources_from_entrypoints():
-        if datasource.is_applicable(choices_made):
-            datasource.set_choices_made(choices_made)
-            datasources.append(datasource)
-
-    return datasources
-
-
-class CombinedDataSource(DataSource):
-    def __init__(self, choices_made=ChoicesMade()):
-        try:
-            self._datasources = get_datasources(choices_made)
-            logger.debug("Datasources: {0}".format(self._datasources))
-            self._choices_made = choices_made
-        except Exception, e:
-            logger.debug(e)
-
-    def criteria(self):
-        try:
-            criteria = set()
-            for ds in self._datasources:
-                criteria = criteria.union(set(ds.criteria()))
-                logger.debug("Criteria: {0}".format(criteria))
-        except Exception, e:
-            logger.debug(e)
-        return list(criteria)
-
-    def options_for_criterion(self, criterion):
-        options = set()
-        for ds in self._datasources:
-            options = options.union(set(ds.options_for_criterion(criterion)))
-        return list(options)
 
     def chooseable_criteria(self):
         all_criteria = self.criteria()
@@ -309,6 +223,121 @@ class CombinedDataSource(DataSource):
                                     'description': option_desc
                                     }]})
         return criteria
+
+    def choose(self, item, value):
+        """Return a new datasource with the item selected."""
+        pass
+
+    def forget(self, item):
+        """Return a new datasource, with criteria equal to the old ones minus
+        the forgotten item."""
+        pass
+
+    def is_applicable(self, choices_made):
+        """Should this data source still be shown, given the choices made?"""
+        own_criteria_identifiers = set(
+            criterion.identifier for criterion in self.criteria())
+        if any(choice_identifier not in own_criteria_identifiers
+               for choice_identifier in choices_made):
+            return False
+
+        return True
+
+    def is_drawable(self, choices_made):
+        """Can a datasource with these choices made be drawn on the map?"""
+        return False
+
+    def has_property(self, property):
+        """Does the datasource have this property? See properties.py
+        for a list."""
+        return hasattr(self, 'PROPERTIES') and property in self.PROPERTIES
+
+    def locations(self):
+        """Should return an Exception if the datasource is not drawable.
+        Should return an Exception if the datasource is not LAYER_POINTS.
+
+        Returns an iterable of dictionaries:
+        {
+        'identifier': a unicode string identifying this locations,
+        'longitude': WGS84 longitude in degrees,
+        'latitude': WGS84 latitude in degrees
+        }
+
+        With optional extra fields.
+        """
+        return []
+
+    def timeseries(self, location_id, start_datetime=None, end_datetime=None):
+        """Return the relevant timeseries at that location id. Start
+        and end datetimes are in UTC. Results in a pandas timeseries
+        object, or None if there are no timeseries available."""
+        return None
+
+
+@memoize
+def datasource_entrypoints():
+    """Use pkg_resources to find all the data sources."""
+
+    return tuple(pkg_resources.iter_entry_points(group="lizard_datasource"))
+
+
+def datasources_from_entrypoints():
+    datasourcefactories = datasource_entrypoints()
+    datasources = []
+    for entrypoint in datasourcefactories:
+        try:
+            datasource_factory = entrypoint.load()
+            datasources += datasource_factory()
+        except ImportError, e:
+            logger.debug(e)
+
+    return datasources
+
+
+def get_datasources(choices_made=ChoicesMade()):
+    datasources = []
+    for datasource in datasources_from_entrypoints():
+        if datasource.visible and datasource.is_applicable(choices_made):
+            datasource.set_choices_made(choices_made)
+            datasources.append(datasource)
+
+    return datasources
+
+
+def get_datasource_by_model(datasource_model, exclude=None):
+    for datasource in datasources_from_entrypoints():
+        if exclude and datasource is exclude:
+            continue
+
+        if (datasource_model.originating_app == datasource.originating_app
+            and datasource.identifier == datasource_model.identifier):
+            return datasource
+
+
+class CombinedDataSource(DataSource):
+    def __init__(self, choices_made=ChoicesMade()):
+        try:
+            self._datasources = get_datasources(choices_made)
+            logger.debug("Datasources: {0}".format(self._datasources))
+            self._choices_made = choices_made
+        except Exception, e:
+            logger.debug(e)
+
+    def criteria(self):
+        try:
+            criteria = set()
+            for ds in self._datasources:
+                criteria = criteria.union(set(ds.criteria()))
+                logger.debug("Criteria: {0}".format(criteria))
+        except Exception, e:
+            logger.debug(e)
+        return list(criteria)
+
+    def options_for_criterion(self, criterion):
+        options = set()
+        for ds in self._datasources:
+            options = options.union(set(ds.options_for_criterion(criterion)))
+        return list(options)
 
     def is_drawable(self, choices_made):
         """Return True if some of our constituents can draw themselves

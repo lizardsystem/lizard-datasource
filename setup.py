@@ -39,12 +39,13 @@ setup(name='lizard_datasource',
       zip_safe=False,
       install_requires=install_requires,
       tests_require=tests_require,
-      extras_require = {'test': tests_require},
+      extras_require={'test': tests_require},
       entry_points={
           'console_scripts': [
           ],
           'lizard_datasource': [
-            'lizard_datasource = lizard_datasource.dummy_datasource:factory'
+            'dummy_datasource = lizard_datasource.dummy_datasource:factory',
+       'augmented_datasource = lizard_datasource.augmented_datasource:factory',
             ],
           }
       )
