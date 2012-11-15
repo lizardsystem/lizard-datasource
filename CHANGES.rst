@@ -2,8 +2,8 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.2 (unreleased)
-----------------
+0.1.1 (2012-11-15)
+------------------
 
 Renamed package to lizard-datasource instead of lizard_datasource,
 because everything else follows that scheme too.
