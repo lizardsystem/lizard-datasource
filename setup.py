@@ -23,7 +23,7 @@ install_requires = [
 tests_require = [
     ]
 
-setup(name='lizard_datasource',
+setup(name='lizard-datasource',
       version=version,
       description="TODO",
       long_description=long_description,
