@@ -5,4 +5,6 @@ Changelog of lizard-datasource
 0.1 (unreleased)
 ----------------
 
-- Initial project structure created with nensskel 1.27.dev0.
+Code doesn't really function yet, but we need a test release of the
+grondwaterinbrabant site. CHANGES will be kept up to date from here
+on.
