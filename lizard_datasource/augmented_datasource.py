@@ -82,20 +82,22 @@ class AugmentedDataSource(datasource.DataSource):
         locations = list(self.augmented_source.locations())
 
         datasource_layer = self.augmented_source.datasource_layer
+        caches = dict()
         if datasource_layer:
-            caches = dict()
             for cache in models.DatasourceCache.objects.filter(
                 datasource_layer=datasource_layer):
                 caches[cache.locationid] = cache.value
-            for location in locations:
+
+        for location in locations:
+            if datasource_layer:
                 color = "888888"  # Default is gray
-                if location['identifier'] in caches:
-                    if caches[location['identifier']] < 1050:
+                if location.identifier in caches:
+                    if caches[location.identifier] < 1050:
                         color = "00ff00"  # Green
                     else:
                         color = "ff0000"  # Red
-                location['color'] = color
-        return locations
+                location.color = color
+            yield location
 
     def timeseries(self, location_id, start_datetime=None, end_datetime=None):
         return self.augmented_source.timeseries(

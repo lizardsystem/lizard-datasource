@@ -256,21 +256,15 @@ class DataSource(object):
         """Should return an Exception if the datasource is not drawable.
         Should return an Exception if the datasource is not LAYER_POINTS.
 
-        Returns an iterable of dictionaries:
-        {
-        'identifier': a unicode string identifying this locations,
-        'longitude': WGS84 longitude in degrees,
-        'latitude': WGS84 latitude in degrees
-        }
-
-        With optional extra fields.
+        Returns an iterable of lizard_datasource.location.Location objects.
         """
         return []
 
     def timeseries(self, location_id, start_datetime=None, end_datetime=None):
         """Return the relevant timeseries at that location id. Start
-        and end datetimes are in UTC. Results in a pandas timeseries
-        object, or None if there are no timeseries available."""
+        and end datetimes are in UTC. Results in a
+        lizard_datasource.timeseries.Timeseries object, or None if
+        there are no timeseries available."""
         return None
 
 
@@ -355,12 +349,6 @@ class CombinedDataSource(DataSource):
         return itertools.chain(*(
             datasource.locations()
             for datasource in self._datasources))
-
-    def timeseries(self, *args, **kwargs):
-        if len(self._datasources) == 1:
-            return self._datasources[0].timeseries(*args, **kwargs)
-        else:
-            return None
 
 
 def datasource(choices_made=ChoicesMade()):

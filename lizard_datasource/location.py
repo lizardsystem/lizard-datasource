@@ -3,11 +3,12 @@ modules reasonably short and readable."""
 
 
 class Location(object):
-    def __init__(self, identifier, latitude, longitude, **kwargs):
-        self.identifier = identifier
-        self.latitude = latitude
-        self.longitude = longitude
-        self.extra_args = kwargs.copy()
+    def __init__(self, identifier, latitude, longitude, color=None, **kwargs):
+        self._identifier = identifier
+        self._latitude = latitude
+        self._longitude = longitude
+        self._extra_args = kwargs.copy()
+        self.color = color
 
     def to_dict(self):
         d = self.extra_args.copy()
@@ -17,6 +18,22 @@ class Location(object):
 
     def description(self):
         for key in ('description', 'name'):
-            if key in self.extra_args:
-                return self.extra_args[key]
+            if key in self._extra_args:
+                return self._extra_args[key]
             return self.identifier
+
+    @property
+    def identifier(self):
+        return self._identifier
+
+    @property
+    def latitude(self):
+        return self._latitude
+
+    @property
+    def longitude(self):
+        return self._longitude
+
+    def __unicode__(self):
+        return "Location '{0}' ({1}, {2})".format(
+            self.identifier, self.latitude, self.longitude)
