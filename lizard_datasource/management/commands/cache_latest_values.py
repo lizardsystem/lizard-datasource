@@ -16,6 +16,6 @@ class Command(BaseCommand):
     similar functionality."""
 
     def handle(self, *args, **options):
-        for ds in datasource.get_datasources():
+        for ds in datasource.datasources_from_entrypoints():
             print(ds)
             scripts.cache_latest_values(ds)

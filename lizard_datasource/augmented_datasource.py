@@ -79,7 +79,7 @@ class AugmentedDataSource(datasource.DataSource):
         return self.augmented_source.is_drawable(choices_made)
 
     def locations(self):
-        locations = self.augmented_source.locations()
+        locations = list(self.augmented_source.locations())
 
         datasource_layer = self.augmented_source.datasource_layer
         if datasource_layer:
@@ -87,7 +87,7 @@ class AugmentedDataSource(datasource.DataSource):
             for cache in models.DatasourceCache.objects.filter(
                 datasource_layer=datasource_layer):
                 caches[cache.locationid] = cache.value
-            for location in iter(locations):
+            for location in locations:
                 color = "888888"  # Default is gray
                 if location['identifier'] in caches:
                     if caches[location['identifier']] < 1050:

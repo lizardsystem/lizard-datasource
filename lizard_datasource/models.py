@@ -48,6 +48,9 @@ class DatasourceLayer(models.Model):
     # JSON.
     choices_made = models.TextField()
 
+    def __unicode__(self):
+        return "{0}: {1}".format(self.datasource_model, self.choices_made)
+
 
 class DatasourceCache(models.Model):
     datasource_layer = models.ForeignKey(DatasourceLayer)

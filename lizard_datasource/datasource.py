@@ -356,3 +356,9 @@ class CombinedDataSource(DataSource):
         return itertools.chain(*(
             datasource.locations()
             for datasource in self._datasources))
+
+    def timeseries(self, *args, **kwargs):
+        if len(self._datasources) == 1:
+            return self._datasources[0].timeseries(*args, **kwargs)
+        else:
+            return None
