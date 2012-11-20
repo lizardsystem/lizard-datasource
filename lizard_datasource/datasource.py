@@ -315,10 +315,9 @@ def get_datasource_by_model(datasource_model, exclude=None):
 
 
 class CombinedDataSource(DataSource):
-    def __init__(self, choices_made=ChoicesMade()):
+    def __init__(self, datasources, choices_made):
         try:
-            self._datasources = get_datasources(choices_made)
-            logger.debug("Datasources: {0}".format(self._datasources))
+            self._datasources = datasources
             self._choices_made = choices_made
         except Exception, e:
             logger.debug(e)
@@ -362,3 +361,19 @@ class CombinedDataSource(DataSource):
             return self._datasources[0].timeseries(*args, **kwargs)
         else:
             return None
+
+
+def datasource(choices_made=ChoicesMade()):
+    """Get the global datasource. If there is only one applicable
+    datasource, return that, otherwise return a CombinedDatasource
+    made up of all of them. We should perhaps have an EmptyDataSource
+    for the zero case. For now, return None."""
+
+    datasources = get_datasources(choices_made)
+
+    if len(datasources) == 0:
+        return None
+    elif len(datasources) == 1:
+        return datasources[0]
+    else:
+        return CombinedDataSource(datasources, choices_made)
