@@ -98,12 +98,17 @@ class DummyDataSource(datasource.DataSource):
             )
 
     def options_for_criterion(self, criterion):
-        logger.debug(criterion)
+        logger.debug(
+            "Dummy options for criterion, criterion: {0}".format(criterion))
         if criterion.identifier == 'appname':
-            return (('lizard_datasource', 'Lizard-DataSource'),)
+            return criteria.OptionList(
+                (criteria.Option('lizard_datasource', 'Lizard-DataSource'),))
         if criterion.identifier == 'first_letter':
-            return (('ae', 'A-E'),  ('gz', 'G-Z'))
-        return ()
+            return criteria.OptionList((
+                    criteria.Option('ae', 'A-E'),
+                    criteria.Option('gz', 'G-Z')))
+        logger.debug("Fallback")
+        return criteria.EmptyOptions()
 
     def is_applicable(self, choices_made):
         if not super(DummyDataSource, self).is_applicable(choices_made):

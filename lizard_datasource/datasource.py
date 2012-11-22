@@ -11,6 +11,7 @@ import pkg_resources
 from django.utils import simplejson
 
 from lizard_datasource import models
+from lizard_datasource import criteria
 from lizard_datasource.functools import memoize
 
 logger = logging.getLogger(__name__)
@@ -181,6 +182,8 @@ class DataSource(object):
         all_criteria = self.criteria()
         chosen_identifiers = set()
         for criterion in all_criteria:
+            options = self.options_for_criterion(criterion)
+
             if (criterion.identifier in self._choices_made or
                 len(self.options_for_criterion(criterion)) == 1):
                 chosen_identifiers.add(criterion.identifier)
@@ -197,31 +200,23 @@ class DataSource(object):
 
             options = self.options_for_criterion(criterion)
             if len(options) > 1:
-                values = []
-                for option_id, option_desc in options:
-                    values.append({
-                            'identifier': option_id,
-                            'description': option_desc,
-                            })
                 criteria.append({
                         'criterion': criterion,
-                        'values': values,
+                        'options': options
                         })
             elif len(options) == 1:
                 # It is still "chooseable" in a way if the resulting
                 # datasource can be drawn
-                option_id, option_desc = options[0]
+                option = options.only_option()
                 resulting_choices = self._choices_made.add(
-                    criterion.identifier, option_id)
-                logger.debug("Resulting choices len options 1: {0}".
-                             format(resulting_choices))
+                    criterion.identifier, option.identifier)
+
                 if self.is_drawable(resulting_choices):
                     criteria.append({
                             'criterion': criterion,
-                            'values': [{
-                                    'identifier': option_id,
-                                    'description': option_desc
-                                    }]})
+                            'options': options
+                            })
+
         return criteria
 
     def choose(self, item, value):
@@ -318,19 +313,19 @@ class CombinedDataSource(DataSource):
 
     def criteria(self):
         try:
-            criteria = set()
+            crits = set()
             for ds in self._datasources:
-                criteria = criteria.union(set(ds.criteria()))
-                logger.debug("Criteria: {0}".format(criteria))
+                crits = crits.union(set(ds.criteria()))
+                logger.debug("Criteria: {0}".format(crits))
         except Exception, e:
             logger.debug(e)
-        return list(criteria)
+        return list(crits)
 
     def options_for_criterion(self, criterion):
-        options = set()
+        options = criteria.EmptyOptions()
         for ds in self._datasources:
-            options = options.union(set(ds.options_for_criterion(criterion)))
-        return list(options)
+            options = options.add(ds.options_for_criterion(criterion))
+        return options
 
     def is_drawable(self, choices_made):
         """Return True if some of our constituents can draw themselves

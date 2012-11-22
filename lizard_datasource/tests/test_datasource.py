@@ -89,3 +89,10 @@ class TestChoicesMade(TestCase):
         self.assertTrue(("a", "value") in l)
         self.assertTrue(("b", "value") in l)
 
+
+class TestDataSource(TestCase):
+    pass
+
+
+class TestCombinedDatasource(TestCase):
+    pass

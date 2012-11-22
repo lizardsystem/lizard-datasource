@@ -38,3 +38,9 @@ class TestUtc(TestCase):
             tzinfo=dates.UTC)
         u = dates.utc(2012, 11, 13, 12, 00)
         self.assertEquals(d, u)
+
+
+class TestUtcNow(TestCase):
+    def test_returns_utc(self):
+        now = dates.utc_now()
+        self.assertEquals(now.tzinfo, pytz.UTC)
