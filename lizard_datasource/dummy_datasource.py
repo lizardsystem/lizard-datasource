@@ -4,12 +4,12 @@ from __future__ import absolute_import, division
 
 import logging
 
-import pandas
-
-from lizard_datasource.dates import utc
 from lizard_datasource import criteria
 from lizard_datasource import datasource
+from lizard_datasource import location
 from lizard_datasource import properties
+from lizard_datasource import timeseries
+from lizard_datasource.dates import utc
 
 logger = logging.getLogger(__name__)
 
@@ -132,16 +132,17 @@ class DummyDataSource(datasource.DataSource):
                 "Datasource locations() called when it wasn't drawable")
         cities = CITIES[self._choices_made['first_letter']]
 
-        return [{
-                'identifier': city['id'],
-                'longitude': city['lon'] / 1000000.0,
-                'latitude': city['lat'] / 1000000.0
-                }
-                for city in cities
-                ]
+        return [
+            location.Location(
+                identifier=city['id'],
+                latitude=city['lat'] / 1000000.0,
+                longitude=city['lon'] / 1000000.0)
+
+            for city in cities
+            ]
 
     def timeseries(self, location_id, start_datetime=None, end_datetime=None):
-        return pandas.Series({
+        return timeseries.Timeseries({
             utc(2012, 11, 13, 11, 0): 10.0,
             utc(2012, 11, 13, 12, 0): 15.0,
             utc(2012, 11, 13, 13, 0): 20.0,

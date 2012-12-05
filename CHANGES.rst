@@ -5,7 +5,8 @@ Changelog of lizard-datasource
 0.2 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Implemented support for percentiles added by
+  augmented_datasource.py. Not dynamic yet.
 
 
 0.1.1 (2012-11-15)

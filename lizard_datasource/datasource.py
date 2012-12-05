@@ -58,6 +58,12 @@ class ChoicesMade(object):
     def __getitem__(self, key):
         return self._choices[key]
 
+    def get(self, key, default):
+        if key in self._choices:
+            return self._choices[key]
+        else:
+            return default
+
     def add(self, key, value):
         choices = self._choices.copy()
         choices[key] = value
@@ -172,6 +178,9 @@ class DataSource(object):
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made
 
+    def get_choices_made(self):
+        return self._choices_made
+
     def criteria(self):
         return ()
 
@@ -188,7 +197,7 @@ class DataSource(object):
                 len(self.options_for_criterion(criterion)) == 1):
                 chosen_identifiers.add(criterion.identifier)
 
-        criteria = []
+        criterions = []
         for criterion in all_criteria:
             if criterion.identifier in self._choices_made:
                 # Already chosen
@@ -200,7 +209,7 @@ class DataSource(object):
 
             options = self.options_for_criterion(criterion)
             if len(options) > 1:
-                criteria.append({
+                criterions.append({
                         'criterion': criterion,
                         'options': options
                         })
@@ -212,12 +221,12 @@ class DataSource(object):
                     criterion.identifier, option.identifier)
 
                 if self.is_drawable(resulting_choices):
-                    criteria.append({
+                    criterions.append({
                             'criterion': criterion,
                             'options': options
                             })
 
-        return criteria
+        return criterions
 
     def choose(self, item, value):
         """Return a new datasource with the item selected."""
@@ -261,6 +270,9 @@ class DataSource(object):
         lizard_datasource.timeseries.Timeseries object, or None if
         there are no timeseries available."""
         return None
+
+    def has_percentiles(self):
+        return False
 
 
 @memoize

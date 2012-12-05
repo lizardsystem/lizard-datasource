@@ -103,6 +103,26 @@ class AugmentedDataSource(datasource.DataSource):
         return self.augmented_source.timeseries(
             location_id, start_datetime, end_datetime)
 
+    def has_percentiles(self):
+        if self._choices_made.get('parameter', None) == 'GW.meting':
+            logger.debug("Parameter is GW.meting!")
+            return True
+        return False
+
+    def percentiles(self, location_id, start_datetime=None, end_datetime=None):
+        percentiles = {}
+        for percentile, parameter in ((10, 'GW.meting.10'),
+                                      (25, 'GW.meting.25'),
+                                      (75, 'GW.meting.75'),
+                                      (90, 'GW.meting.90')):
+            self.augmented_source.set_choices_made(
+                self._choices_made.add('parameter', parameter))
+            percentiles[percentile] = self.augmented_source.timeseries(
+                location_id, start_datetime, end_datetime).data()
+        self.augmented_source.set_choices_made(self._choices_made)
+        logger.debug("Percentiles: {0}".format(percentiles))
+        return percentiles
+
 
 def factory():
     """Returns an AugmentedDataSource object for each

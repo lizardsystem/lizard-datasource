@@ -3,6 +3,8 @@ timeseries."""
 
 import pandas
 
+from itertools import izip
+
 
 class Timeseries(object):
     def __init__(
@@ -36,3 +38,7 @@ class Timeseries(object):
 
     def values(self):
         return list(self.timeseries)
+
+    def data(self):
+        return [[key, value]
+                for key, value in izip(self.dates(), self.values())]
