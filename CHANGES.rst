@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.2 (unreleased)
+0.2 (2012-12-20)
 ----------------
 
 - Implemented support for percentiles added by
