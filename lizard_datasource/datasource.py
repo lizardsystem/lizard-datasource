@@ -256,7 +256,7 @@ class DataSource(object):
         for a list."""
         return hasattr(self, 'PROPERTIES') and property in self.PROPERTIES
 
-    def locations(self):
+    def locations(self, bare=True):
         """Should return an Exception if the datasource is not drawable.
         Should return an Exception if the datasource is not LAYER_POINTS.
 

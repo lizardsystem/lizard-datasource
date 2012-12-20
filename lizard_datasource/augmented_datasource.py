@@ -78,25 +78,41 @@ class AugmentedDataSource(datasource.DataSource):
     def is_drawable(self, choices_made):
         return self.augmented_source.is_drawable(choices_made)
 
-    def locations(self):
-        locations = list(self.augmented_source.locations())
+    def locations(self, bare=False):
+        locations = list(self.augmented_source.locations(bare=bare))
 
-        datasource_layer = self.augmented_source.datasource_layer
-        caches = dict()
-        if datasource_layer:
-            for cache in models.DatasourceCache.objects.filter(
-                datasource_layer=datasource_layer):
-                caches[cache.locationid] = cache.value
+        if bare:
+            for location in locations:
+                yield location
+            return
+
+        datasource_layer = None
+        if self._choices_made.get('parameter', None) == 'GW.meting':
+            klasse = self._choices_made.add(
+                'parameter', 'klasse')
+
+            old_choices = self._choices_made
+            self._choices_made = klasse
+            datasource_layer = self.datasource_layer
+            self._choices_made = old_choices
+
+            caches = dict()
+            if datasource_layer:
+                for cache in models.DatasourceCache.objects.filter(
+                    datasource_layer=datasource_layer):
+                    caches[cache.locationid] = cache.value
+            colormap = models.ColorMap.objects.get(pk=1)
 
         for location in locations:
+            color = "888888"  # Default is gray
             if datasource_layer:
-                color = "888888"  # Default is gray
                 if location.identifier in caches:
-                    if caches[location.identifier] < 1050:
-                        color = "00ff00"  # Green
-                    else:
-                        color = "ff0000"  # Red
-                location.color = color
+                    value = caches[location.identifier]
+                    color = colormap.color_for(value)
+                    if color.startswith("#"):
+                        color = color[1:]
+
+            location.color = color
             yield location
 
     def timeseries(self, location_id, start_datetime=None, end_datetime=None):

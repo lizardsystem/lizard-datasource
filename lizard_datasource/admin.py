@@ -11,9 +11,23 @@ class DatasourceLayerAdmin(admin.ModelAdmin):
     pass
 
 
+class ColorFromLatestValueInline(admin.TabularInline):
+    model = models.ColorFromLatestValue
+
+
 class AugmentedDataSourceAdmin(admin.ModelAdmin):
-    pass
+    inlines = [ColorFromLatestValueInline]
+
+
+class ColorMapLineInline(admin.TabularInline):
+    model = models.ColorMapLine
+
+
+class ColorMapAdmin(admin.ModelAdmin):
+    inlines = [ColorMapLineInline]
+
 
 admin.site.register(models.DatasourceModel, DatasourceModelAdmin)
 admin.site.register(models.DatasourceLayer, DatasourceLayerAdmin)
 admin.site.register(models.AugmentedDataSource, AugmentedDataSourceAdmin)
+admin.site.register(models.ColorMap, ColorMapAdmin)

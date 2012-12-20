@@ -1,3 +1,4 @@
+import datetime
 import logging
 import time
 
@@ -26,10 +27,10 @@ def _yield_layers(ds):
             logger.debug("Chooseable critera: {0}".format(criteria))
             if criteria:
                 criterion = criteria[0]['criterion']
-                options = criteria[0]['values']
-                for option in options:
+                options = criteria[0]['options']
+                for option in options.iter_options():
                     choices_mades.append(choices_made.add(
-                            criterion.identifier, option['identifier']))
+                            criterion.identifier, option.identifier))
 
 
 def cache_latest_values(ds):
@@ -46,6 +47,13 @@ def cache_latest_values(ds):
         return  # For now, we don't know what to do in this case
 
     for layer in _yield_layers(ds):
+        choices_made = layer.get_choices_made()
+        if choices_made.get('parameter', None) != 'klasse':
+            logger.debug("Skipping choices_made {0}.".format(choices_made))
+            continue
+        else:
+            logger.debug("Getting data for {0}.".format(choices_made))
+
         datasource_layer = layer.datasource_layer
         logger.debug("Before locations")
         locations = layer.locations()
@@ -53,22 +61,22 @@ def cache_latest_values(ds):
         for location in locations:
             print(
                 "Getting timeseries for location {0}."
-                .format(location['identifier']))
+                .format(location.identifier))
             timeseries = layer.timeseries(
-                location['identifier'],
-                start_datetime=dates.utc(2012, 11, 1),
+                location.identifier,
+                start_datetime=dates.utc_now() - datetime.timedelta(days=30),
                 end_datetime=dates.utc_now())
             if timeseries is None or len(timeseries) == 0:
                 continue
-            latest = timeseries.tail(1)
+            latest = timeseries.latest()
             try:
                 cache = models.DatasourceCache.objects.get(
                     datasource_layer=datasource_layer,
-                    locationid=location['identifier'])
+                    locationid=location.identifier)
             except models.DatasourceCache.DoesNotExist:
                 cache = models.DatasourceCache(
                     datasource_layer=datasource_layer,
-                    locationid=location['identifier'])
+                    locationid=location.identifier)
             cache.timestamp = latest.keys()[0]
             cache.value = latest[0]
             print("Saving value {0} for timestamp {1}.".format(

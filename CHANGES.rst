@@ -8,6 +8,8 @@ Changelog of lizard-datasource
 - Implemented support for percentiles added by
   augmented_datasource.py. Not dynamic yet.
 
+- Implemented colors from 'klasse' parameter. Also not configurable
+  yet.
 
 0.1.1 (2012-11-15)
 ------------------

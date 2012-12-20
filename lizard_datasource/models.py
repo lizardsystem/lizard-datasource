@@ -5,6 +5,7 @@ from __future__ import absolute_import, division
 import logging
 
 from django.db import models
+import colorful.fields
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +64,67 @@ class AugmentedDataSource(models.Model):
     """Model holding the configuration of an AugmentedDataSource; see
     augmented_datasource.py."""
     augmented_source = models.ForeignKey(DatasourceModel)
+    name = models.CharField(max_length=100)
 
     def __unicode__(self):
-#        return "Augmented version of {0}.".format(self.augmented_source)
-        return "Augmented version of something.".format(self.augmented_source)
+        return self.name
+
+
+class ColorMap(models.Model):
+    """Model holding a mapping from a float value to a color. It has a
+    name, and several ColorMapLines that have a min, a max,
+    "inclusive" checkboxes and a color."""
+    name = models.CharField(max_length=100)
+    defaultcolor = colorful.fields.RGBColorField(null=True)
+
+    def __unicode__(self):
+        return self.name
+
+    def color_for(self, value):
+        for colormapline in self.colormapline_set.all():
+            color = colormapline.color_for(value)
+            if color:
+                return color
+        return self.defaultcolor
+
+
+class ColorFromLatestValue(models.Model):
+    augmented_source = models.ForeignKey(AugmentedDataSource)
+    layer_to_add_color_to = models.ForeignKey(
+        DatasourceLayer, related_name="colors_from")
+    layer_to_get_color_from = models.ForeignKey(
+        DatasourceLayer, null=True, related_name="colors_used_by")
+    colormap = models.ForeignKey(ColorMap)
+    hide_from_layer = models.BooleanField(default=False)
+
+
+class ColorMapLine(models.Model):
+    class Meta:
+        ordering = ['minvalue', 'maxvalue']
+
+    colormap = models.ForeignKey(ColorMap)
+
+    minvalue = models.FloatField(null=True, blank=True)
+    maxvalue = models.FloatField(null=True, blank=True)
+    mininclusive = models.BooleanField(default=False)
+    maxinclusive = models.BooleanField(default=True)
+
+    color = colorful.fields.RGBColorField()
+
+    def color_for(self, value):
+        if self.minvalue is None:
+            minvalue = value - 1
+        else:
+            minvalue = self.minvalue
+
+        if self.maxvalue is None:
+            maxvalue = value + 1
+        else:
+            maxvalue = self.maxvalue
+
+        if ((minvalue < value < maxvalue) or
+            (self.mininclusive and minvalue == value) or
+            (self.maxinclusive and maxvalue == value)):
+            return self.color
+
+        return None

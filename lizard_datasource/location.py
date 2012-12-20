@@ -11,16 +11,19 @@ class Location(object):
         self.color = color
 
     def to_dict(self):
-        d = self.extra_args.copy()
+        d = self._extra_args.copy()
         d['identifier'] = self.identifier
         d['latitude'] = self.latitude
         d['longitude'] = self.longitude
+        if self.color is not None:
+            d['color'] = self.color
+        return d
 
     def description(self):
         for key in ('description', 'name'):
             if key in self._extra_args:
                 return self._extra_args[key]
-            return self.identifier
+        return self.identifier
 
     @property
     def identifier(self):
@@ -37,3 +40,6 @@ class Location(object):
     def __unicode__(self):
         return "Location '{0}' ({1}, {2})".format(
             self.identifier, self.latitude, self.longitude)
+
+    def __repr__(self):
+        return unicode(self)

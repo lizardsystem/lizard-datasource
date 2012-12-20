@@ -18,6 +18,8 @@ install_requires = [
     'mock',
     'south',
     'pandas',
+    'django-colorful',
+    'factory_boy'
     ],
 
 tests_require = [
@@ -30,8 +32,8 @@ setup(name='lizard-datasource',
       # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[],
       keywords=[],
-      author='TODO',
-      author_email='TODO@nelen-schuurmans.nl',
+      author='Remco Gerlich',
+      author_email='remco.gerlich@nelen-schuurmans.nl',
       url='',
       license='GPL',
       packages=['lizard_datasource'],

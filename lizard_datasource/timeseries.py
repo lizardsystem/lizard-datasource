@@ -39,6 +39,12 @@ class Timeseries(object):
     def values(self):
         return list(self.timeseries)
 
+    def latest(self):
+        return self.timeseries.tail(1)
+
     def data(self):
         return [[key, value]
                 for key, value in izip(self.dates(), self.values())]
+
+    def __len__(self):
+        return len(self.timeseries) if self.timeseries is not None else 0
