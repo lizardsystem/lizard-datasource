@@ -52,6 +52,12 @@ class DatasourceLayer(models.Model):
     def __unicode__(self):
         return "{0}: {1}".format(self.datasource_model, self.choices_made)
 
+    @property
+    def latest_values_used(self):
+        """The only thing that latest values are used for as yet is
+        for ColorFromLatestValue."""
+        return self.colors_used_by.exists()
+
 
 class DatasourceCache(models.Model):
     datasource_layer = models.ForeignKey(DatasourceLayer)
@@ -95,6 +101,16 @@ class ColorFromLatestValue(models.Model):
     layer_to_get_color_from = models.ForeignKey(
         DatasourceLayer, null=True, related_name="colors_used_by")
     colormap = models.ForeignKey(ColorMap)
+    hide_from_layer = models.BooleanField(default=False)
+
+
+class PercentileLayer(models.Model):
+    augmented_source = models.ForeignKey(AugmentedDataSource)
+    layer_to_add_percentile_to = models.ForeignKey(
+        DatasourceLayer, related_name="percentiles_from")
+    layer_to_get_percentile_from = models.ForeignKey(
+        DatasourceLayer, related_name="percentiles_used_by")
+    percentile = models.FloatField(default=0.0)
     hide_from_layer = models.BooleanField(default=False)
 
 

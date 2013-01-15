@@ -1,6 +1,10 @@
 """Defines classes for criteria (Criterion class) and options (Option,
 Options, OptionList, OptionTree)."""
 
+# Python 3 is coming to town
+from __future__ import print_function, unicode_literals
+from __future__ import absolute_import, division
+
 
 class Criterion(object):
     TYPE_SELECT = object()
@@ -42,6 +46,9 @@ class Criterion(object):
         return "Criterion(identifier={0}, description={1})".format(
             self._identifier, self._description)
 
+    def __repr__(self):
+        return unicode(self)
+
 
 class AppNameCriterion(Criterion):
     def __init__(self):
@@ -59,6 +66,15 @@ class Option(object):
 
     def __unicode__(self):
         return "Option({0}, {1})".format(self.identifier, self.description)
+
+    def __repr__(self):
+        return unicode(self)
+
+    def __eq__(self, other):
+        return getattr(other, 'identifier', None) == self.identifier
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 class Options(object):
@@ -103,6 +119,12 @@ class OptionList(Options):
         else:
             return self
 
+    def minus(self, option):
+        """Return a new OptionList with all the options, except for
+        this one"""
+        return OptionList(o for o in self.options
+                          if o != option)
+
 
 class OptionTree(Options):
     def __init__(self, description=None, children=None, option=None):
@@ -131,6 +153,9 @@ class OptionTree(Options):
             self.description or "None",
             ", ".join(unicode(c) for c in self.children))
 
+    def __repr__(self):
+        return unicode(self)
+
     def __len__(self):
         if self.is_leaf:
             return 1
@@ -155,6 +180,26 @@ class OptionTree(Options):
             return OptionTree(children=[self, option_tree])
         else:
             return self
+
+    def minus(self, option):
+        """Return a copy of the tree, with that option removed. Only called if
+        len(tree) > 1, so it should never end up entirely empty."""
+        if self.is_leaf:
+            if self.option == option:
+                # Remove this leaf by returning None
+                return None
+            else:
+                # Leaves are immutable so we can just return self
+                return self
+        else:
+            children = [child.minus(option) for child in self.children]
+            children = [child for child in children if child is not None]
+
+            if children:
+                return OptionTree(
+                    description=self.description, children=children)
+            else:
+                return None
 
 
 class EmptyOptions(Options):

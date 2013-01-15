@@ -15,8 +15,12 @@ class ColorFromLatestValueInline(admin.TabularInline):
     model = models.ColorFromLatestValue
 
 
+class PercentileInline(admin.TabularInline):
+    model = models.PercentileLayer
+
+
 class AugmentedDataSourceAdmin(admin.ModelAdmin):
-    inlines = [ColorFromLatestValueInline]
+    inlines = [ColorFromLatestValueInline, PercentileInline]
 
 
 class ColorMapLineInline(admin.TabularInline):

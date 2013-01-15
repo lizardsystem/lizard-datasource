@@ -41,7 +41,7 @@ class ChoicesMade(object):
     """
 
     def __init__(self, json=None, dict=None, **kwargs):
-        if json is not None and dict is None and kwargs == {}:
+        if (json is not None) and (dict is None) and (kwargs == {}):
             self._choices = simplejson.loads(json)
         elif json is None and dict is not None and kwargs == {}:
             self._choices = dict.copy()
@@ -68,6 +68,9 @@ class ChoicesMade(object):
         choices = self._choices.copy()
         choices[key] = value
         return ChoicesMade(dict=choices)
+
+    def add_criterion_option(self, criterion, option):
+        return self.add(criterion.identifier, option.identifier)
 
     def forget(self, key):
         choices = self._choices.copy()
@@ -160,7 +163,11 @@ class DataSource(object):
 
     @property
     def datasource_layer(self):
-        """Don't cache, because choices_made is mutated regularly."""
+        """Return the DatasourceLayer model instance that relates to
+        this datasource and the curently set ChoicesMade. Create the
+        instance if it doesn't exist yet."""
+
+        # Don't cache, because choices_made is mutated regularly.
         json = self._choices_made.json()
         dsm = self.datasource_model
 
@@ -315,6 +322,16 @@ def get_datasource_by_model(datasource_model, exclude=None):
             return datasource
 
 
+def get_datasource_by_layer(datasource_layer):
+    datasource = get_datasource_by_model(
+        datasource_layer.datasource_model)
+
+    choices_made = ChoicesMade(json=datasource_layer.choices_made)
+    datasource.set_choices_made(choices_made)
+
+    return datasource
+
+
 class CombinedDataSource(DataSource):
     def __init__(self, datasources, choices_made):
         try:
@@ -342,6 +359,7 @@ class CombinedDataSource(DataSource):
     def is_drawable(self, choices_made):
         """Return True if some of our constituents can draw themselves
         given these choices"""
+
         return any(ds.is_drawable(choices_made)
                    for ds in self._datasources)
 

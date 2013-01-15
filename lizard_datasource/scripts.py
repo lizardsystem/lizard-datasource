@@ -48,25 +48,28 @@ def cache_latest_values(ds):
 
     for layer in _yield_layers(ds):
         choices_made = layer.get_choices_made()
-        if choices_made.get('parameter', None) != 'klasse':
-            logger.debug("Skipping choices_made {0}.".format(choices_made))
-            continue
-        else:
-            logger.debug("Getting data for {0}.".format(choices_made))
+        logger.debug("Getting data for {0}.".format(choices_made))
 
+        # This creates the datasource layer in the database, if it
+        # didn't exist yet
         datasource_layer = layer.datasource_layer
-        logger.debug("Before locations")
+
+        # If we don't actually use the latest values of this layer, we
+        # should skip it.
+        if not datasource_layer.latest_values_used:
+            continue
+
         locations = layer.locations()
-        logger.debug("Got locations")
         for location in locations:
             print(
                 "Getting timeseries for location {0}."
                 .format(location.identifier))
             timeseries = layer.timeseries(
                 location.identifier,
-                start_datetime=dates.utc_now() - datetime.timedelta(days=30),
+                start_datetime=dates.utc_now() - datetime.timedelta(days=60),
                 end_datetime=dates.utc_now())
             if timeseries is None or len(timeseries) == 0:
+                logger.debug("timeseries is empty")
                 continue
             latest = timeseries.latest()
             try:
