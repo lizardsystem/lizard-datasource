@@ -14,7 +14,7 @@ class TestAugmentedSource(TestCase):
         augmented_source = augmented_datasource.AugmentedDataSource(
             model_instance)
         self.assertEquals(
-            augmented_source.augmented_model_instance,
+            augmented_source.config_object,
             model_instance)
 
 
