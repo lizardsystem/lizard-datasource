@@ -38,14 +38,32 @@ class ChoicesMade(object):
     - ChoicesMade(
          appname="lizard_fewsjdbc",
          slug="brabant"): initialize with keyword parameters.
+
+    ChoicesMade objects are immutable value objects. They can be used
+    as dictionary keys and can be relied on not to change. Therefore,
+    methods like add() that add choices do so by returning a new
+    ChoicesMade instance.
+
+    Unfortunately this class only stores the identifiers of choices
+    made, and not the extra data of lizard_datasource.criteria.Option
+    objects (primarily the description of an option). This is mostly
+    to be able to represent a ChoicesMade instance as JSON in a way
+    that is fairly small and constant.
+
+    Although dictionaries are not ordered, the JSON serialization of a
+    ChoicesMade object is always in alphabetical order. If the JSON
+    representation of two objects is different, they are different.
     """
 
     def __init__(self, json=None, dict=None, **kwargs):
         if (json is not None) and (dict is None) and (kwargs == {}):
+            # Initialize using JSON.
             self._choices = simplejson.loads(json)
-        elif json is None and dict is not None and kwargs == {}:
+        elif (json is None) and (dict is not None) and (kwargs == {}):
+            # Initialize using dict.
             self._choices = dict.copy()
         else:
+            # Initialize using kwargs.
             self._choices = kwargs.copy()
             if json is not None:
                 self._choices['json'] = json
@@ -53,32 +71,47 @@ class ChoicesMade(object):
                 self._choices['dict'] = dict
 
     def __contains__(self, key):
+        """Return true if the criterion identified by key is in the
+        choices made."""
         return key in self._choices
 
     def __getitem__(self, key):
+        """Return the identifier of the option chosen for this
+        criterion."""
         return self._choices[key]
 
     def get(self, key, default=None):
-        if key in self._choices:
-            return self._choices[key]
-        else:
-            return default
+        """Return the identifier of the option chosen for this
+        criterion, or the default if the criterion isn't found."""
+        return self._choices.get(key, default)
 
-    def add(self, key, value):
+    def add(self, criterion_identifier, option_identifier):
+        """Return a new instance of ChoicesMade with this choice added."""
         choices = self._choices.copy()
-        choices[key] = value
+        choices[criterion_identifier] = option_identifier
         return ChoicesMade(dict=choices)
 
     def add_criterion_option(self, criterion, option):
+        """Return a new instance of ChoicesMade with this choice added."""
         return self.add(criterion.identifier, option.identifier)
 
-    def forget(self, key):
+    def forget(self, criterion_identifier):
+        """Return a new instance of ChoicesMade with this choice removed."""
         choices = self._choices.copy()
-        if key in choices:
-            del choices[key]
+        if criterion_identifier in choices:
+            del choices[criterion_identifier]
         return ChoicesMade(dict=choices)
 
     def json(self):
+        """Return a JSON representation of this ChoicesMade instance.
+
+        The keys are always sorted, and two equal ChoicesMade instances have equal
+        JSON representations, and vice versa.
+
+        E.g., for two choicesmades 'a' and 'b',
+
+        (a == b) == (a.json() == b.json())
+        """
         return simplejson.dumps(self._choices, sort_keys=True)
 
     def __unicode__(self):
@@ -98,37 +131,6 @@ class ChoicesMade(object):
 class DataSource(object):
     """Base class for all the DataSource classes. Defines the interface of
     a Lizard data source. Other data sources should subclass this one.
-
-    Datasources have _criteria_. A datasource for which no criteria
-    are given represents the entirety of all data reachable through
-    the DataSource API.  _Choosing_ extra criteria narrows the dataset
-    down and results in a new Datasource representing that data.
-
-    Criteria exist in four _flexibilities_:
-
-    * _Fixed_ criteria were initially given to the call to
-      DataSource() constructor by the app. They represent choices that
-      are made by the app and that will not by changed, and will stay
-      invisible to the user. For instance, the app may choose to see
-      only timeseries-backed data.
-
-    * _Chosen_ criteria were added later, presumably by the
-      user. These can be _forgotten_, resulting in a new DataSource.
-
-    * _Available_ criteria can be shown to the user to further refine
-      the dataset.  They can be _chosen_ resulting in a new
-      DataSource.
-
-    * _Collapsed_ criteria are criteria that have only one choice, but
-      weren't actively chosen by the user. These shouldn't be shown.
-
-    It is possible that after making a choice, the returned datasource
-    has criteria that didn't appear in the old one. E.g. a FEWS data
-    source may decide to only offer Parameter criteria once a Filter
-    criterium is chosen.
-
-    Criteria may have several _types_ in the future, but initially
-    they will just be iterables of possibilities.
     """
 
     @property
@@ -303,6 +305,86 @@ class DataSource(object):
         return False
 
 
+class CombinedDataSource(DataSource):
+    """If there are several visible datasources in the system, a
+    CombinedDataSource is presented to any client code instead.
+
+    Conceptually, the CombinedDataSource represents the combined data
+    of all its underlying data sources.
+
+    Most methods will be implemented by calling all data sources in a
+    loop and combining the result in some way.
+
+    Most methods added to DataSource will have to be added to
+    CombinedDataSource as well.
+
+    The CombinedDataSource should not have any state, other than the list
+    of datasources, so it has no config object in the database and does not
+    by itself keep track of choices made.
+    """
+    def __init__(self, datasources):
+        self._datasources = datasources
+
+    @property
+    def identifier(self):
+        return 'CombinedDataSource'
+
+    @property
+    def description(self):
+        return 'CombinedDataSource'
+
+    @property
+    def originating_app(self):
+        return 'lizard_datasource'
+
+    @property
+    def datasource_model(self):
+        """Should never be called."""
+        raise ValueError()
+
+    @property
+    def visible(self):
+        # True, because we are a combination of visible data sources
+        return True
+
+    @property
+    def datasource_layer(self):
+        """Should never be called."""
+        raise ValueError()
+
+    def criteria(self):
+        crits = set()
+        for ds in self._datasources:
+            crits = crits.union(set(ds.criteria()))
+
+        return list(crits)
+
+    def options_for_criterion(self, criterion):
+        options = criteria.EmptyOptions()
+        for ds in self._datasources:
+            options = options.add(ds.options_for_criterion(criterion))
+        return options
+
+    def is_drawable(self, choices_made):
+        """Return True if some of our constituents can draw themselves
+        given these choices"""
+
+        return any(ds.is_drawable(choices_made)
+                   for ds in self._datasources)
+
+    def has_property(self, property):
+        """CombinedDataSource has a property iff all the underlying
+        data sources have it."""
+        return all(ds.has_property(property)
+                   for ds in self._datasources)
+
+    def locations(self):
+        """Return locations from all the underlying datasources."""
+        return itertools.chain(*(
+            datasource.locations()
+            for datasource in self._datasources))
+
+
 @memoize
 def datasource_entrypoints():
     """Use pkg_resources to find all the data sources."""
@@ -353,47 +435,6 @@ def get_datasource_by_layer(datasource_layer):
     return datasource
 
 
-class CombinedDataSource(DataSource):
-    def __init__(self, datasources, choices_made):
-        try:
-            self._datasources = datasources
-            self._choices_made = choices_made
-        except Exception, e:
-            logger.warn(e)
-
-    def criteria(self):
-        crits = set()
-        for ds in self._datasources:
-            crits = crits.union(set(ds.criteria()))
-
-        return list(crits)
-
-    def options_for_criterion(self, criterion):
-        options = criteria.EmptyOptions()
-        for ds in self._datasources:
-            options = options.add(ds.options_for_criterion(criterion))
-        return options
-
-    def is_drawable(self, choices_made):
-        """Return True if some of our constituents can draw themselves
-        given these choices"""
-
-        return any(ds.is_drawable(choices_made)
-                   for ds in self._datasources)
-
-    def has_property(self, property):
-        """CombinedDataSource has a property iff all the underlying
-        data sources have it."""
-        return all(ds.has_property(property)
-                   for ds in self._datasources)
-
-    def locations(self):
-        """Return locations from all the underlying datasources."""
-        return itertools.chain(*(
-            datasource.locations()
-            for datasource in self._datasources))
-
-
 def datasource(choices_made=ChoicesMade()):
     """Get the global datasource. If there is only one applicable
     datasource, return that, otherwise return a CombinedDatasource
@@ -407,4 +448,4 @@ def datasource(choices_made=ChoicesMade()):
     elif len(datasources) == 1:
         return datasources[0]
     else:
-        return CombinedDataSource(datasources, choices_made)
+        return CombinedDataSource(datasources)
