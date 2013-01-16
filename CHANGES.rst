@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.3 (unreleased)
+0.3 (2013-01-16)
 ----------------
 
 - Removed hardcoding of options.
