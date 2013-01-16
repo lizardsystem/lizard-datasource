@@ -23,11 +23,3 @@ class TestAugmentedSourceFactory(TestCase):
         test_models.AugmentedDataSourceF.create()
         sources = augmented_datasource.factory()
         self.assertEquals(len(sources), 1)
-
-    def test_exception_somewhere_returns_empty_list(self):
-        test_models.AugmentedDataSourceF.create()
-        with mock.patch(
-            'lizard_datasource.models.AugmentedDataSource.objects.all',
-            side_effect=ValueError('testing')):
-            sources = augmented_datasource.factory()
-        self.assertEquals(sources, [])
