@@ -20,6 +20,16 @@ Changelog of lizard-datasource
 - Layers that are used for augmenting other layers (color layers,
   percentile layers) can now be hidden.
 
+- Add a 'visible_criteria' method to datasources, that by default just
+  returns chooseable_criteria(). This should be used to hide choices
+  that shouldn't be shown to the user. The previous method of hiding
+  them from visible_criteria was inadequate, because then they would
+  be hidden from internal use too (e.g., the caching script couldn't
+  find them either).
+
+- Add a 'unit' method to datasources, that optionally returns a string
+  describing the unit of the data represented by them.
+
 
 0.2 (2012-12-20)
 ----------------

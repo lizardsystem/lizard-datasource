@@ -58,7 +58,7 @@ class ChoicesMade(object):
     def __getitem__(self, key):
         return self._choices[key]
 
-    def get(self, key, default):
+    def get(self, key, default=None):
         if key in self._choices:
             return self._choices[key]
         else:
@@ -235,6 +235,11 @@ class DataSource(object):
 
         return criterions
 
+    def visible_criteria(self):
+        """Return those chooseable criteria that should be visible to
+        the user."""
+        return self.chooseable_criteria()
+
     def choose(self, item, value):
         """Return a new datasource with the item selected."""
         pass
@@ -258,6 +263,18 @@ class DataSource(object):
         """Can a datasource with these choices made be drawn on the map?"""
         return False
 
+    def unit(self, choices_made):
+        """Returns a unicode string describing the unit of the data
+        drawable by this datasource.
+
+        Should only be called if the datasource is_drawable with these
+        choices, because if there are still choices to be made before
+        a layer can be drawn, it is likely that the data has more than
+        one unit.
+
+        Optional. This function is allowed to simply return None."""
+        return None
+
     def has_property(self, property):
         """Does the datasource have this property? See properties.py
         for a list."""
@@ -268,6 +285,10 @@ class DataSource(object):
         Should return an Exception if the datasource is not LAYER_POINTS.
 
         Returns an iterable of lizard_datasource.location.Location objects.
+
+        If bare is False, other helpful information like coloring may
+        be included in the locations. If bare is True, the fastest way
+        to return the right locations should be used.
         """
         return []
 
@@ -297,7 +318,7 @@ def datasources_from_entrypoints():
             datasource_factory = entrypoint.load()
             datasources += datasource_factory()
         except ImportError, e:
-            logger.debug(e)
+            logger.warn(e)
 
     return datasources
 
@@ -338,16 +359,13 @@ class CombinedDataSource(DataSource):
             self._datasources = datasources
             self._choices_made = choices_made
         except Exception, e:
-            logger.debug(e)
+            logger.warn(e)
 
     def criteria(self):
-        try:
-            crits = set()
-            for ds in self._datasources:
-                crits = crits.union(set(ds.criteria()))
-                logger.debug("Criteria: {0}".format(crits))
-        except Exception, e:
-            logger.debug(e)
+        crits = set()
+        for ds in self._datasources:
+            crits = crits.union(set(ds.criteria()))
+
         return list(crits)
 
     def options_for_criterion(self, criterion):

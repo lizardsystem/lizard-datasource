@@ -74,11 +74,16 @@ class AugmentedDataSource(datasource.DataSource):
         return self.original_datasource.options_for_criterion(criterion)
 
     def chooseable_criteria(self):
-        """These are the chooseable criteria from the augmented
-        source, minus the layers that are hidden because they are used
-        for stuff like colors and percentiles."""
+        """Just return the chooseable criteria of the original
+        datasource."""
+        return self.original_datasource.chooseable_criteria()
 
-        criteria = self.original_datasource.chooseable_criteria()
+    def visible_criteria(self):
+        """These are the chooseable criteria from the original source,
+        minus the layers that are hidden because they are used for
+        stuff like colors and percentiles."""
+
+        criteria = self.chooseable_criteria()
 
         colorfroms = models.ColorFromLatestValue.objects.filter(
             augmented_source=self.config_object,
@@ -131,6 +136,9 @@ class AugmentedDataSource(datasource.DataSource):
 
     def is_drawable(self, choices_made):
         return self.original_datasource.is_drawable(choices_made)
+
+    def unit(self, choices_made):
+        return self.original_datasource.unit(choices_made)
 
     def locations(self, bare=False):
         locations = list(self.original_datasource.locations(bare=bare))
@@ -193,10 +201,6 @@ def factory():
     """Return an AugmentedDataSource object for each
     AugmentedDataSource model instance."""
 
-    try:
-        return [AugmentedDataSource(config_object)
-                for config_object in models.AugmentedDataSource.objects.all()]
-    except Exception, e:
-        logger.debug(
-            "Exception in augmented datasource factory: {0}".format(e))
-        return []
+    return [AugmentedDataSource(config_object)
+            for config_object in models.AugmentedDataSource.objects.all()]
+

@@ -24,7 +24,7 @@ def _yield_layers(ds):
             yield ds
         else:
             criteria = ds.chooseable_criteria()
-            logger.debug("Chooseable critera: {0}".format(criteria))
+
             if criteria:
                 criterion = criteria[0]['criterion']
                 options = criteria[0]['options']
@@ -47,9 +47,6 @@ def cache_latest_values(ds):
         return  # For now, we don't know what to do in this case
 
     for layer in _yield_layers(ds):
-        choices_made = layer.get_choices_made()
-        logger.debug("Getting data for {0}.".format(choices_made))
-
         # This creates the datasource layer in the database, if it
         # didn't exist yet
         datasource_layer = layer.datasource_layer
@@ -69,8 +66,8 @@ def cache_latest_values(ds):
                 start_datetime=dates.utc_now() - datetime.timedelta(days=60),
                 end_datetime=dates.utc_now())
             if timeseries is None or len(timeseries) == 0:
-                logger.debug("timeseries is empty")
                 continue
+
             latest = timeseries.latest()
             try:
                 cache = models.DatasourceCache.objects.get(
