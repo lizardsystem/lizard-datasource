@@ -303,6 +303,7 @@ class CombinedDataSource(DataSource):
     """
     def __init__(self, datasources):
         self._datasources = datasources
+        self._choices_made = None
 
     @property
     def identifier(self):
@@ -332,10 +333,12 @@ class CombinedDataSource(DataSource):
         raise ValueError()
 
     def set_choices_made(self, choices_made):
-        pass
+        for datasource in self._datasources:
+            datasource.set_choices_made(choices_made)
+        self._choices_made = choices_made
 
     def get_choices_made(self):
-        pass
+        return self._choices_made
 
     def criteria(self):
         crits = set()
