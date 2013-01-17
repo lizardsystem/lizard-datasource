@@ -46,6 +46,18 @@ class TestCriterion(TestCase):
         self.assertEquals(len(s), 2)
 
 
+class TestOption(TestCase):
+    def test_if_option_is_hashable(self):
+        option1 = criteria.Option(
+            identifier="some_identifier",
+            description="Some description.")
+        d = {option1: 3}
+        option2 = criteria.Option(
+            identifier="some_identifier",
+            description="Some description.")
+        self.assertEquals(d.get(option2), 3)
+
+
 class TestOptionList(TestCase):
     def test_we_can_initialize_an_empty_optionlist(self):
         ol = criteria.OptionList(())

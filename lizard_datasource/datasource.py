@@ -16,6 +16,7 @@ from lizard_datasource.functools import memoize
 
 logger = logging.getLogger(__name__)
 
+
 class ChoicesMade(object):
     """Represents a set of choices made. Dict-like.
 

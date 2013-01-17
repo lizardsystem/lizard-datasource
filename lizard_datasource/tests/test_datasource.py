@@ -153,6 +153,44 @@ class TestCombinedDatasource(TestCase):
         # should always be there, visible should always be True.
         self.assertTrue(datasource.CombinedDataSource([]).visible)
 
+    def test_datasource_layer_raises_exception(self):
+        # The combined data source has no state, so if something tries to use
+        # its datasource model, that's an error
+        self.assertRaises(
+            ValueError,
+            lambda: datasource.CombinedDataSource([]).datasource_layer)
+
+    def test_set_choices_sets_in_all_data_sources(self):
+        cm = datasource.ChoicesMade()
+        dm = dummy_datasource.DummyDataSource()
+
+        combined = datasource.CombinedDataSource([dm])
+        combined.set_choices_made(cm)
+        self.assertEquals(dm.get_choices_made(), cm)
+
+    def test_get_choices_returns_value_set_with_set(self):
+        cm = datasource.ChoicesMade()
+        dm = dummy_datasource.DummyDataSource()
+
+        combined = datasource.CombinedDataSource([dm])
+        combined.set_choices_made(cm)
+        self.assertEquals(combined.get_choices_made(), cm)
+
+    def test_criteria_returns_combination(self):
+        # dm1 and dm2 have the same criteria
+        dm1 = dummy_datasource.DummyDataSource()
+        dm2 = dummy_datasource.DummyDataSource()
+
+        # combined should return a list combining both
+        combined = datasource.CombinedDataSource([dm1, dm2])
+
+        criteria = combined.criteria()
+        self.assertEquals(len(criteria), len(dm1.criteria()))
+
+        for criterion in dm1.criteria():
+            self.assertTrue(criterion in criteria)
+        for criterion in dm2.criteria():
+            self.assertTrue(criterion in criteria)
 
 class TestDataSourceFunction(TestCase):
     def test_if_there_are_no_datasources_returns_none(self):

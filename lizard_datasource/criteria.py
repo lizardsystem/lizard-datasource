@@ -59,13 +59,16 @@ class AppNameCriterion(Criterion):
 
 
 class Option(object):
-    """An option has an identifier and a description."""
+    """An option has an identifier and a description. Options are
+    hashable, that is, they can be members of sets and keys of
+    dictionaries."""
     def __init__(self, identifier, description):
         self.identifier = identifier
         self.description = description
 
     def __unicode__(self):
-        return "Option({0}, {1})".format(self.identifier, self.description)
+        return "Option({0}, {1})".format(
+            repr(self.identifier), repr(self.description))
 
     def __repr__(self):
         return unicode(self)
@@ -76,8 +79,15 @@ class Option(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __hash__(self):
+        return hash(self.identifier)
+
 
 class Options(object):
+    """This is the base class of the various ways to represent a set
+    of options. Options and its subclasses are _immutable_, so that
+    any methods changing the Options should return a new instance."""
+
     @property
     def is_option_list(self):
         return False
