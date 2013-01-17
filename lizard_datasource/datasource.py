@@ -16,19 +16,6 @@ from lizard_datasource.functools import memoize
 
 logger = logging.getLogger(__name__)
 
-FIXED_FLEXIBILITY = object()
-AVAILABLE_FLEXIBILITY = object()
-CHOSEN_FLEXIBILITY = object()
-COLLAPSED_FLEXIBILITY = object()
-
-# List of internal criteria, not to be used by implementing datasources for
-# other purposes:
-# appname: each datasource must have this set. This is used to find
-#          the correct implementing datasources. If get_datasource()
-#          is called without this, the global "all data sources
-#          combined" data source is returned.
-
-
 class ChoicesMade(object):
     """Represents a set of choices made. Dict-like.
 
@@ -242,15 +229,6 @@ class DataSource(object):
         the user."""
         return self.chooseable_criteria()
 
-    def choose(self, item, value):
-        """Return a new datasource with the item selected."""
-        pass
-
-    def forget(self, item):
-        """Return a new datasource, with criteria equal to the old ones minus
-        the forgotten item."""
-        pass
-
     def is_applicable(self, choices_made):
         """Should this data source still be shown, given the choices made?"""
         own_criteria_identifiers = set(
@@ -352,6 +330,12 @@ class CombinedDataSource(DataSource):
         """Should never be called."""
         raise ValueError()
 
+    def set_choices_made(self, choices_made):
+        pass
+
+    def get_choices_made(self):
+        pass
+
     def criteria(self):
         crits = set()
         for ds in self._datasources:
@@ -365,12 +349,18 @@ class CombinedDataSource(DataSource):
             options = options.add(ds.options_for_criterion(criterion))
         return options
 
+    # chooseable_criteria not overridden
+    # visible_criteria not overriden
+
     def is_drawable(self, choices_made):
         """Return True if some of our constituents can draw themselves
         given these choices"""
 
         return any(ds.is_drawable(choices_made)
                    for ds in self._datasources)
+
+    def unit(self):
+        pass
 
     def has_property(self, property):
         """CombinedDataSource has a property iff all the underlying
@@ -383,6 +373,12 @@ class CombinedDataSource(DataSource):
         return itertools.chain(*(
             datasource.locations()
             for datasource in self._datasources))
+
+    def timeseries(self):
+        pass
+
+    def has_percentiles(self):
+        pass
 
 
 @memoize

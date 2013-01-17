@@ -3,6 +3,7 @@ import mock
 from unittest import TestCase
 
 from lizard_datasource import datasource
+from lizard_datasource import dummy_datasource
 from lizard_datasource import criteria
 
 
@@ -114,7 +115,43 @@ class TestChoicesMade(TestCase):
 
 
 class TestCombinedDatasource(TestCase):
-    pass
+    def test_has_identifier(self):
+        ds = datasource.CombinedDataSource([
+                dummy_datasource.DummyDataSource(),
+                dummy_datasource.DummyDataSource()
+                ])
+        self.assertTrue(ds.identifier)
+
+    def test_has_description(self):
+        ds = datasource.CombinedDataSource([
+                dummy_datasource.DummyDataSource(),
+                dummy_datasource.DummyDataSource()
+                ])
+        self.assertTrue(ds.description)
+
+    def test_originating_app_is_lizard_datasource(self):
+        # Change the return value of the dummy data source, so that it is
+        # clear that the originating app is set by the combined datasource
+        with mock.patch(
+          'lizard_datasource.dummy_datasource.DummyDataSource.originating_app',
+            return_value="changed"):
+            ds = datasource.CombinedDataSource([
+                    dummy_datasource.DummyDataSource(),
+                    dummy_datasource.DummyDataSource()
+                    ])
+            self.assertEquals(ds.originating_app, 'lizard_datasource')
+
+    def test_datasource_model_raises_exception(self):
+        # The combined data source has no state, so if something tries to use
+        # its datasource model, that's an error
+        self.assertRaises(
+            ValueError,
+            lambda: datasource.CombinedDataSource([]).datasource_model)
+
+    def test_is_visible(self):
+        # Since it can't be turned off by changing the datasource model, and it
+        # should always be there, visible should always be True.
+        self.assertTrue(datasource.CombinedDataSource([]).visible)
 
 
 class TestDataSourceFunction(TestCase):
