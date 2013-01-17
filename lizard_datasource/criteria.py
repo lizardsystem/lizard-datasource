@@ -98,9 +98,15 @@ class Options(object):
 
 
 class OptionList(Options):
+    """Represents a simple list of options. An option's identifier can
+    not occur more than once in an optionlist. Iter_options() returns the
+    options in sorted order of the descriptions.
+
+    XXX Rename this class to OptionSet."""
+
     def __init__(self, options):
         """Needs an iterable of Options."""
-        self.options = list(options)
+        self.options = frozenset(options)
 
     @property
     def is_option_list(self):
@@ -116,18 +122,24 @@ class OptionList(Options):
         return bool(self.options)
 
     def iter_options(self):
-        return iter(self.options)
+        return iter(sorted(
+                self.options,
+                key=lambda option: option.description))
 
     def only_option(self):
         if len(self.options) != 1:
             raise ValueError("only_option called when len isn't 1.")
-        return self.options[0]
+
+        (member,) = self.options
+        return member
 
     def add(self, option_list):
         if len(option_list) > 0:
-            return OptionList(self.options + option_list.options)
-        else:
-            return self
+            u = self.options.union(option_list.options)
+            if len(u) != len(self.options):
+                return OptionList(u)
+
+        return self
 
     def minus(self, option):
         """Return a new OptionList with all the options, except for
