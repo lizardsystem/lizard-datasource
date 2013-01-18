@@ -192,6 +192,30 @@ class TestCombinedDatasource(TestCase):
         for criterion in dm2.criteria():
             self.assertTrue(criterion in criteria)
 
+    def test_options_for_criterion(self):
+        # Construct two datasources returning different option lists.
+        option1 = criteria.Option("test1", "test1")
+        option2 = criteria.Option("test2", "test2")
+        ol1 = criteria.OptionList([option1])
+        ol2 = criteria.OptionList([option2])
+
+        options = [ol1, ol2]
+
+        def side_effect(*args, **kwargs):
+            return options.pop(0)
+
+        with mock.patch(
+  'lizard_datasource.dummy_datasource.DummyDataSource.options_for_criterion',
+            side_effect=side_effect):
+            ds1 = dummy_datasource.DummyDataSource()
+            ds2 = dummy_datasource.DummyDataSource()
+
+            cds = datasource.CombinedDataSource([ds1, ds2])
+
+            self.assertEquals(
+                len(cds.options_for_criterion(mock.MagicMock())), 2)
+
+
 class TestDataSourceFunction(TestCase):
     def test_if_there_are_no_datasources_returns_none(self):
         with mock.patch('lizard_datasource.datasource.get_datasources',

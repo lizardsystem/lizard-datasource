@@ -182,7 +182,17 @@ class DataSource(object):
         return ()
 
     def options_for_criterion(self, criterion):
-        return ()
+        """Return a criteria.Options object that represents the options this
+        datasource has for that criterion.
+
+        Datasources can be asked to supply options for criterion that
+        they don't even have. In that case, they should return
+        criteria.EmptyOptions().  It is important that all datasources
+        return the same type of Options object (OptionList,
+        OptionTree, ...) for the same criterion, because
+        CombinedDataSource will try to add them together."""
+
+        return criteria.EmptyOptions()
 
     def chooseable_criteria(self):
         all_criteria = self.criteria()
