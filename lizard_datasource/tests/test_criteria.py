@@ -45,6 +45,10 @@ class TestCriterion(TestCase):
         s = set((criterion1, criterion2))
         self.assertEquals(len(s), 2)
 
+    def test_has_repr(self):
+        criterion = criteria.Criterion("test1", "some string")
+        self.assertTrue(repr(criterion))
+
 
 class TestOption(TestCase):
     def test_if_option_is_hashable(self):
@@ -56,6 +60,21 @@ class TestOption(TestCase):
             identifier="some_identifier",
             description="Some description.")
         self.assertEquals(d.get(option2), 3)
+
+    def test_has_repr(self):
+        option = criteria.Option(
+            identifier="some_identifier",
+            description="Some description.")
+        self.assertTrue(repr(option))
+
+    def test_options_comparable(self):
+        option1 = criteria.Option(
+            identifier="some_identifier1",
+            description="Some description.")
+        option2 = criteria.Option(
+            identifier="some_identifier2",
+            description="Some description.")
+        self.assertTrue(option1 != option2)
 
 
 class TestOptionList(TestCase):
@@ -119,6 +138,16 @@ class TestOptionList(TestCase):
         ol3 = ol1.add(ol2)
         self.assertEquals(len(ol3), 2)
         self.assertFalse(ol3 is ol1)
+
+    def test_minus_works(self):
+        op1 = criteria.Option("test1", "test1")
+        op2 = criteria.Option("test2", "test2")
+        ol = criteria.OptionList([op1, op2])
+        self.assertEquals(len(ol), 2)
+        ol = ol.minus(op1)
+        self.assertEquals(len(ol), 1)
+        ol = ol.minus(op1)
+        self.assertEquals(len(ol), 1)
 
 
 class TestOptionTree(TestCase):
@@ -198,6 +227,48 @@ class TestOptionTree(TestCase):
         leaf = criteria.OptionTree(option=option)
         ot = criteria.OptionTree(children=(leaf,))
         self.assertTrue(ot is ot.add(criteria.EmptyOptions()))
+
+    def test_minus_a_leaf_results_in_empty_options(self):
+        option = criteria.Option("test1", "test1")
+        tree = criteria.OptionTree(option=option)
+        tree = tree.minus(option)
+        self.assertTrue(isinstance(tree, criteria.EmptyOptions))
+
+    def test_minus_an_unknown_option_leaves_tree_unchanged(self):
+        option1 = criteria.Option("test1", "test1")
+        option2 = criteria.Option("test2", "test2")
+
+        tree = criteria.OptionTree(option=option1)
+        new_tree = tree.minus(option2)
+
+        self.assertTrue(tree == new_tree)
+
+    def test_minus_can_remove_branch(self):
+        """A tree that consists of two branches, each with one leaf, from
+        which one is removed, should result in a tree with a single branch."""
+        option1 = criteria.Option("test1", "test1")
+        option2 = criteria.Option("test2", "test2")
+        branch1 = criteria.OptionTree(option=option1)
+        branch2 = criteria.OptionTree(option=option2)
+        tree = criteria.OptionTree(children=[branch1, branch2])
+        tree = tree.minus(option1)
+
+        self.assertEquals(len(tree), 1)
+        self.assertEquals(len(tree.children), 1)
+
+    def test_removing_both_branches_results_in_empty_options(self):
+        option1 = criteria.Option("test1", "test1")
+        option2 = criteria.Option("test2", "test2")
+        branch1 = criteria.OptionTree(option=option1)
+        branch2 = criteria.OptionTree(option=option2)
+        tree = criteria.OptionTree(children=[branch1, branch2])
+        tree = tree.minus(option1)
+        tree = tree.minus(option2)
+        self.assertTrue(isinstance(tree, criteria.EmptyOptions))
+
+    def test_has_repr(self):
+        ol = criteria.OptionTree(children=[])
+        self.assertTrue(repr(ol))
 
 
 class TestEmptyOptions(TestCase):

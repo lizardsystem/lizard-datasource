@@ -36,9 +36,6 @@ class Criterion(object):
     def __eq__(self, other):
         return getattr(other, '_identifier', None) == self._identifier
 
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
     def __hash__(self):
         return hash(self._identifier)
 
@@ -75,9 +72,6 @@ class Option(object):
 
     def __eq__(self, other):
         return getattr(other, 'identifier', None) == self.identifier
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
     def __hash__(self):
         return hash(self.identifier)
@@ -203,9 +197,10 @@ class OptionTree(Options):
         else:
             return self
 
-    def minus(self, option):
-        """Return a copy of the tree, with that option removed. Only called if
-        len(tree) > 1, so it should never end up entirely empty."""
+    def _recursive_minus(self, option):
+        """Return a copy of the tree, with that option removed. Only
+        called if len(tree) >= 1, so it should never end up entirely
+        empty."""
         if self.is_leaf:
             if self.option == option:
                 # Remove this leaf by returning None
@@ -214,7 +209,8 @@ class OptionTree(Options):
                 # Leaves are immutable so we can just return self
                 return self
         else:
-            children = [child.minus(option) for child in self.children]
+            children = [
+                child._recursive_minus(option) for child in self.children]
             children = [child for child in children if child is not None]
 
             if children:
@@ -222,6 +218,18 @@ class OptionTree(Options):
                     description=self.description, children=children)
             else:
                 return None
+
+    def minus(self, option):
+        tree = self
+
+        if len(tree) > 0:
+            tree = self._recursive_minus(option)
+
+        if tree is not None and len(tree) > 0:
+            return tree
+        else:
+            # Apparently we removed the last option
+            return EmptyOptions()
 
 
 class EmptyOptions(Options):
