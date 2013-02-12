@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.4 (unreleased)
+0.4 (2013-02-12)
 ----------------
 
 - Add new 'location_annotations' method to a datasource. It gives a list
