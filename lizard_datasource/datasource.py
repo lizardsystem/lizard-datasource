@@ -250,11 +250,11 @@ class DataSource(object):
 
         return True
 
-    def is_drawable(self, choices_made):
+    def is_drawable(self, choices_made=None):
         """Can a datasource with these choices made be drawn on the map?"""
         return False
 
-    def unit(self, choices_made):
+    def unit(self, choices_made=None):
         """Returns a unicode string describing the unit of the data
         drawable by this datasource.
 
@@ -366,20 +366,33 @@ class CombinedDataSource(DataSource):
     # chooseable_criteria not overridden
     # visible_criteria not overriden
 
-    def is_drawable(self, choices_made):
+    def is_drawable(self, choices_made=None):
         """Return True if some of our constituents can draw themselves
         given these choices"""
+
+        if choices_made is None:
+            choices_made = self._choices_made
 
         return any(ds.is_drawable(choices_made)
                    for ds in self._datasources)
 
-    def unit(self):
-        pass
+    def unit(self, choices_made=None):
+        """If the constituent data sources all give the same answer,
+        return it, otherwise return None."""
+        if choices_made is None:
+            choices_made = self._choices_made
+
+        units = set(ds.unit(choices_made) for ds in self._datasources)
+        if len(units) == 1:
+            return units.pop()
+        else:
+            return None
 
     def has_property(self, property):
-        """CombinedDataSource has a property iff all the underlying
-        data sources have it."""
-        return all(ds.has_property(property)
+        """CombinedDataSource has a property iff there are underlying
+        data source and they all the underlying data sources have the
+        property."""
+        return self._datasources and all(ds.has_property(property)
                    for ds in self._datasources)
 
     def locations(self):
