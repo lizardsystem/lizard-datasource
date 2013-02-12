@@ -140,6 +140,14 @@ class AugmentedDataSource(datasource.DataSource):
     def unit(self, choices_made):
         return self.original_datasource.unit(choices_made)
 
+    def _colorfrom(self):
+        """Returns the used colorfromlatestvalue object, if any."""
+        try:
+            return models.ColorFromLatestValue.objects.get(
+                layer_to_add_color_to=self.datasource_layer)
+        except models.ColorFromLatestValue.DoesNotExist:
+            return None
+
     def locations(self, bare=False):
         locations = list(self.original_datasource.locations(bare=bare))
 
@@ -149,10 +157,9 @@ class AugmentedDataSource(datasource.DataSource):
             return
 
         cached_values = dict()
-        try:
-            colorfrom = models.ColorFromLatestValue.objects.get(
-                layer_to_add_color_to=self.datasource_layer)
 
+        colorfrom = self._colorfrom()
+        if colorfrom:
             # If there is a colorfrom, use it
             colormap = colorfrom.colormap
             if colorfrom.layer_to_get_color_from:
@@ -160,9 +167,6 @@ class AugmentedDataSource(datasource.DataSource):
                     datasource_layer=colorfrom.layer_to_get_color_from):
                     cached_values[cached_value.locationid] = (
                         cached_value.value)
-        except models.ColorFromLatestValue.DoesNotExist:
-            # No colouring.
-            pass
 
         for location in locations:
             color = "888888"  # Default is gray
@@ -174,6 +178,19 @@ class AugmentedDataSource(datasource.DataSource):
 
             location.color = color
             yield location
+
+    def location_annotations(self):
+        """If we have colors, we should have a legend for them."""
+        logger.debug("IN ANNOTATIONS")
+        colorfrom = self._colorfrom()
+        if not colorfrom:
+            return None
+        logger.debug("HAVE COLORFROM")
+        annotations = {
+            'color': colorfrom.colormap.legend()
+            }
+        logger.debug("ANNOTATIONS: {0}".format(annotations))
+        return annotations
 
     def timeseries(self, location_id, start_datetime=None, end_datetime=None):
         return self.original_datasource.timeseries(

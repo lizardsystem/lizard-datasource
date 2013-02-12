@@ -5,6 +5,7 @@ from __future__ import absolute_import, division
 import logging
 
 from django.db import models
+from django.utils.translation import ugettext_lazy as _
 import colorful.fields
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,7 @@ class ColorMap(models.Model):
     "inclusive" checkboxes and a color."""
     name = models.CharField(max_length=100)
     defaultcolor = colorful.fields.RGBColorField(null=True)
+    defaultdescription = models.CharField(max_length=50, null=True, blank=True)
 
     def __unicode__(self):
         return self.name
@@ -92,6 +94,15 @@ class ColorMap(models.Model):
             if color:
                 return color
         return self.defaultcolor
+
+    def legend(self):
+        l = [
+            (line.color, line.line_description)
+            for line in self.colormapline_set.all()]
+        if self.defaultcolor:
+            description = self.defaultdescription or _("Default")
+            l.append((self.defaultcolor, description))
+        return l
 
 
 class ColorFromLatestValue(models.Model):
@@ -124,6 +135,7 @@ class ColorMapLine(models.Model):
     maxvalue = models.FloatField(null=True, blank=True)
     mininclusive = models.BooleanField(default=False)
     maxinclusive = models.BooleanField(default=True)
+    description = models.CharField(max_length=50, null=True, blank=True)
 
     color = colorful.fields.RGBColorField()
 
@@ -144,3 +156,25 @@ class ColorMapLine(models.Model):
             return self.color
 
         return None
+
+    def line_description(self):
+        """Return a description for this line, to be used in legends."""
+        if self.description:
+            return self.description
+
+        # Otherwise construct one that looks like "0 <= x < 6"
+        description = "x"
+
+        if self.minvalue is not None:
+            if self.mininclusive:
+                description = "{0} <= {1}".format(self.minvalue, description)
+            else:
+                description = "{0} < {1}".format(self.minvalue, description)
+
+        if self.maxvalue is not None:
+            if self.maxinclusive:
+                description = "{0} <= {1}".format(description, self.maxvalue)
+            else:
+                description = "{0} < {1}".format(description, self.maxvalue)
+
+        return description

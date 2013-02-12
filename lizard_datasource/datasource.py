@@ -290,6 +290,19 @@ class DataSource(object):
         there are no timeseries available."""
         return None
 
+    def location_annotations(self):
+        """A datasource may add annotations (extra fields) to the
+        Locations it returns.
+
+        If it doesn't, this function returns None, or {}.
+
+        If it does, this function returns a dictionaries with the
+        field names as keys.  The values are either None (in which
+        case this just serves to note that the field exists) or a list
+        of tuples of the form (value, description), which can be
+        used for things like legends."""
+        return None
+
     def has_percentiles(self):
         return False
 

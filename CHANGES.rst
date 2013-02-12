@@ -5,7 +5,17 @@ Changelog of lizard-datasource
 0.4 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add new 'location_annotations' method to a datasource. It gives a list
+  of possible annotations that this datasource gives to its locations
+  (e.g., a color) and possible also gives some legend information for
+  the annotations.
+
+- Added description fields to colormaps so that they can have a good
+  legend, added descriptions like "0 <= x < 1" using the colormap's
+  boundaries if there are no descriptions.
+
+- Augmented datasource implements location_annotations using the
+  colormap's legend.
 
 
 0.3 (2013-01-16)
