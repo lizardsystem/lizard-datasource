@@ -272,6 +272,65 @@ class TestCombinedDatasource(TestCase):
         cds = datasource.CombinedDataSource([ds1, ds2])
         self.assertTrue(cds.has_property("TESTING"))
 
+
+class TestDatasourceEntrypointsFunction(TestCase):
+    def test_returns_tuple(self):
+        # There isn't much we can test -- just call it and see if we
+        # get something in return
+        with mock.patch(
+            'pkg_resources.iter_entry_points', return_value=iter([2, 3, 4])):
+            self.assertEquals(
+                datasource.datasource_entrypoints(),
+                (2, 3, 4))
+
+
+class TestDatasourcesFromEntrypointsFunction(TestCase):
+    def test_returns_loaded_entrypoints(self):
+        entrypoint = mock.MagicMock()
+        factory = mock.MagicMock(return_value=["whee"])
+        entrypoint.load = mock.MagicMock(return_value=factory)
+
+        with mock.patch(
+            'lizard_datasource.datasource.datasource_entrypoints',
+            return_value=[entrypoint]):
+            self.assertEquals(
+                datasource.datasources_from_entrypoints(),
+                ["whee"])
+
+    def test_import_error_is_ignored(self):
+        entrypoint1 = mock.MagicMock()
+        factory1 = mock.MagicMock(return_value=["whee"])
+        entrypoint1.load = mock.MagicMock(return_value=factory1)
+
+        entrypoint2 = mock.MagicMock()
+
+        def raises_import_error():
+            raise ImportError()
+
+        entrypoint2.load = raises_import_error
+
+        with mock.patch(
+            'lizard_datasource.datasource.datasource_entrypoints',
+            return_value=[entrypoint1, entrypoint2]):
+            self.assertEquals(
+                datasource.datasources_from_entrypoints(),
+                ["whee"])
+
+
+class TestGetDatasources(TestCase):
+    def test_returns_applicable_datasource(self):
+        ds = mock.MagicMock()
+        ds.visible = True
+        ds.is_applicable = lambda choices_made: True
+
+        with mock.patch(
+            'lizard_datasource.datasource.datasources_from_entrypoints',
+            return_value=[ds]):
+            self.assertEquals(
+                datasource.get_datasources(),
+                [ds])
+
+
 class TestDataSourceFunction(TestCase):
     def test_if_there_are_no_datasources_returns_none(self):
         with mock.patch('lizard_datasource.datasource.get_datasources',

@@ -423,12 +423,14 @@ class CombinedDataSource(DataSource):
 
 @memoize
 def datasource_entrypoints():
-    """Use pkg_resources to find all the data sources."""
+    """Use pkg_resources to find all the data source entry points."""
 
     return tuple(pkg_resources.iter_entry_points(group="lizard_datasource"))
 
 
 def datasources_from_entrypoints():
+    """Return all datasources in the system."""
+
     datasourcefactories = datasource_entrypoints()
     datasources = []
     for entrypoint in datasourcefactories:
@@ -442,6 +444,9 @@ def datasources_from_entrypoints():
 
 
 def get_datasources(choices_made=ChoicesMade()):
+    """Return all the datasources defined by entrypoints that are
+    applicable to the given choices_made."""
+
     datasources = []
     for datasource in datasources_from_entrypoints():
         if datasource.visible and datasource.is_applicable(choices_made):
@@ -452,6 +457,13 @@ def get_datasources(choices_made=ChoicesMade()):
 
 
 def get_datasource_by_model(datasource_model, exclude=None):
+    """Find and return a given datasource using its stored model.
+
+    All datasources by implementing apps need to have an 'originating_app'
+    property and an 'identifier' property. Datasource_models store these,
+    plus some central configuration options for the datasources. If you
+    have a datasource_model instance, use this function to get the
+    corresponding datasource."""
     for datasource in datasources_from_entrypoints():
         if exclude and datasource is exclude:
             continue
@@ -462,6 +474,11 @@ def get_datasource_by_model(datasource_model, exclude=None):
 
 
 def get_datasource_by_layer(datasource_layer):
+    """Return the datasource defined by datasource_layer.
+
+    A datasource layer is defined by a datasource model and a set of
+    choices made. This function retrieves the datasource using the
+    datasource model, and sets the choices made before returning it."""
     datasource = get_datasource_by_model(
         datasource_layer.datasource_model)
 
