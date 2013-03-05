@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.5 (unreleased)
+0.5 (2013-03-05)
 ----------------
 
 - Fix bug where a combined datasource for which no choices were made
