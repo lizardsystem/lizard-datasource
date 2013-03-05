@@ -5,7 +5,8 @@ Changelog of lizard-datasource
 0.5 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix bug where a combined datasource for which no choices were made
+  yet did not get an empty choices made object.
 
 
 0.4.1 (2013-02-12)
