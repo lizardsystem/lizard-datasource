@@ -344,9 +344,16 @@ class TestDataSourceFunction(TestCase):
             self.assertTrue(datasource.datasource() is m)
 
     def test_a_combined_datasource_is_returned(self):
-        m1, m2 = object(), object()
+        m1, m2 = datasource.DataSource(), datasource.DataSource()
         with mock.patch('lizard_datasource.datasource.get_datasources',
                         return_value=[m1, m2]):
             self.assertTrue(isinstance(
                     datasource.datasource(),
                     datasource.CombinedDataSource))
+
+    def test_combined_datasource_has_choices_made(self):
+        m1, m2 = datasource.DataSource(), datasource.DataSource()
+        with mock.patch('lizard_datasource.datasource.get_datasources',
+                        return_value=[m1, m2]):
+            combined = datasource.datasource()
+            self.assertNotEquals(combined.get_choices_made(), None)

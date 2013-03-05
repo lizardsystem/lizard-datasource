@@ -199,9 +199,8 @@ class DataSource(object):
         chosen_identifiers = set()
         for criterion in all_criteria:
             options = self.options_for_criterion(criterion)
-
             if (criterion.identifier in self._choices_made or
-                len(self.options_for_criterion(criterion)) == 1):
+                len(options) == 1):
                 chosen_identifiers.add(criterion.identifier)
 
         criterions = []
@@ -501,4 +500,6 @@ def datasource(choices_made=ChoicesMade()):
     elif len(datasources) == 1:
         return datasources[0]
     else:
-        return CombinedDataSource(datasources)
+        datasource = CombinedDataSource(datasources)
+        datasource.set_choices_made(choices_made)
+        return datasource
