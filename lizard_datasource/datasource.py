@@ -199,8 +199,6 @@ class DataSource(object):
         chosen_identifiers = set()
         for criterion in all_criteria:
             options = self.options_for_criterion(criterion)
-            if options is None:
-                logger.debug("Options for {0} is none.".format(criterion))
             if (criterion.identifier in self._choices_made or
                 len(options) == 1):
                 chosen_identifiers.add(criterion.identifier)
