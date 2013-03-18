@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
+import datetime
 import logging
 
 from django.db import models
@@ -30,10 +31,61 @@ class DatasourceModel(models.Model):
     # have one of those
     visible = models.BooleanField(default=False)
 
+    # There is a 'cache latest values' script that runs now and then
+    script_times_to_run_per_day = models.IntegerField(default=24)
+    script_last_run_started = models.DateTimeField(null=True)
+    script_run_next_opportunity = models.BooleanField(default=False)
+
     def __unicode__(self):
         return "'{0}' from app '{1}'".format(
             self.identifier,
             self.originating_app)
+
+    def activation_for_cache_script(self):
+        """Return True if the cache script should active. If it shouldn't,
+        if will do nothing this time.
+
+        If True is returned, it is assumed that the script will run now,
+        and that is recorded."""
+
+        if self.cache_script_is_due():
+            self.script_last_run_started = datetime.datetime.now()
+            self.script_run_next_opportunity = False
+            self.save()
+            return True
+        else:
+            return False
+
+    def cache_script_is_due(self):
+        if self.script_run_next_opportunity:
+            return True
+
+        if self.script_last_run_started is None:
+            return True
+
+        if not (0 < self.script_times_to_run_per_day <= (24 * 60)):
+            return False
+
+        minutes_between_scripts = (
+            (60 * 24) // self.script_times_to_run_per_day)
+
+        current_time = datetime.datetime.now()
+
+        minutes_since_midnight = (
+            60 * current_time.hour + current_time.minute)
+
+        script_should_run_at_minutes = (
+            minutes_since_midnight -
+            (minutes_since_midnight % minutes_between_scripts))
+
+        script_should_run_at = current_time.replace(
+            hour=script_should_run_at_minutes // 60,
+            minute=script_should_run_at_minutes % 60)
+
+        return script_should_run_at > self.script_last_run_started
+
+    class Meta:
+        ordering = ('originating_app', 'identifier')
 
 
 class DatasourceLayer(models.Model):

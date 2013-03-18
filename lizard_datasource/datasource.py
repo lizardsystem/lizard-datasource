@@ -172,6 +172,14 @@ class DataSource(object):
             dsl.save()
             return dsl
 
+    def activation_for_cache_script(self):
+        """Return True if the cache script should active. If it shouldn't,
+        if will do nothing this time.
+
+        If True is returned, it is assumed that the script will run now,
+        and that is recorded."""
+        return self.datasource_model.activation_for_cache_script()
+
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made
 

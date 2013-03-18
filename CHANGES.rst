@@ -5,7 +5,14 @@ Changelog of lizard-datasource
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- If the cache_latest_values script runs every minute, it is now possible
+  to active it so that it will work next minute using the admin interface.
+
+- It is now possible to configure the number of times the cache script
+  activates that way per day.
+
+- Improve the datasource model admin pages
+
 
 
 0.5 (2013-03-05)
