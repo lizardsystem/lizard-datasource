@@ -4,7 +4,6 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
-import datetime
 import itertools
 import logging
 import pkg_resources
@@ -173,16 +172,13 @@ class DataSource(object):
             dsl.save()
             return dsl
 
-    def cache_script_is_due(self):
-        """Return True if it is time for the cache script."""
-        return self.datasource_model.cache_script_is_due(
-            datetime.datetime.now())
+    def activation_for_cache_script(self):
+        """Return True if the cache script should active. If it shouldn't,
+        if will do nothing this time.
 
-    def cache_script_runs(self):
-        datasource_model = self.datasource_model
-        datasource_model.script_last_run_started = datetime.datetime.now()
-        datasource_model.script_run_next_opportunity = False
-        datasource_model.save()
+        If True is returned, it is assumed that the script will run now,
+        and that is recorded."""
+        return self.datasource_model.activation_for_cache_script()
 
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made

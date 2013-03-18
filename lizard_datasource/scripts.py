@@ -46,11 +46,9 @@ def cache_latest_values(ds):
             properties.DATA_CAN_HAVE_VALUE_LAYER_SCRIPT)):
         return  # For now, we don't know what to do in this case
 
-    if not ds.cache_script_is_due():
+    # Only actually do something if the script is due.
+    if not ds.activation_for_cache_script():
         return
-
-    ds.cache_script_runs()  # So that the datasource can record that
-                            # this happened
 
     for layer in _yield_layers(ds):
         # This creates the datasource layer in the database, if it

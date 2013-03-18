@@ -9,7 +9,7 @@ def run_cache_script_next_time(modeladmin, request, queryset):
     queryset.update(script_run_next_opportunity=True)
 
 run_cache_script_next_time.short_description = _(
-    "Run the cache latest values script at the next opportunity")
+    "Run the cache-latest-values script at the next opportunity")
 
 
 class DatasourceModelAdmin(admin.ModelAdmin):

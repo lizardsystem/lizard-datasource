@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
+import datetime
 import logging
 
 from django.db import models
@@ -40,7 +41,22 @@ class DatasourceModel(models.Model):
             self.identifier,
             self.originating_app)
 
-    def cache_script_is_due(self, current_time):
+    def activation_for_cache_script(self):
+        """Return True if the cache script should active. If it shouldn't,
+        if will do nothing this time.
+
+        If True is returned, it is assumed that the script will run now,
+        and that is recorded."""
+
+        if self.cache_script_is_due():
+            self.script_last_run_started = datetime.datetime.now()
+            self.script_run_next_opportunity = False
+            self.save()
+            return True
+        else:
+            return False
+
+    def cache_script_is_due(self):
         if self.script_run_next_opportunity:
             return True
 
@@ -52,6 +68,8 @@ class DatasourceModel(models.Model):
 
         minutes_between_scripts = (
             (60 * 24) // self.script_times_to_run_per_day)
+
+        current_time = datetime.datetime.now()
 
         minutes_since_midnight = (
             60 * current_time.hour + current_time.minute)
