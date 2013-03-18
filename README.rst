@@ -1,6 +1,43 @@
 lizard-datasource
 ==========================================
 
+Installation
+============
+
+"lizard_datasource" should be in installed apps, its urls should be
+added to urls.py, and bin/django migrate should be run.
+
+If you want to use datasources from other apps, e.g. from lizard-fewsjdbc,
+then a recent enough version of lizard-fewsjdbc also needs to be installed.
+
+The command 'bin/django cache_latest_values' should be setup to run every minute.
+By default it doesn't cache anything (only values that are used are cached, and
+you haven't added anything that will be used yet) but this also creates models
+in the database that can be used to configured lizard-datasource.
+
+To run it through supervisor in a buildout, add something like
+this to buildout.cfg:
+
+In [supervisor]:
+
+      20 cache_latest_values (autostart=false autorestart=false startsecs=0) ${buildout:bin-directory}/django [cache_latest_values]
+
+And then a latest-values-cronjob:
+
+[latest-values-cronjob]
+recipe = z3c.recipe.usercrontab
+times = * * * * *
+command = ${buildout:bin-directory}/supervisorctl start cache_latest_values > /dev/null
+
+This script runs every minute, but it checks each datasource to see if
+it is due yet. By default, the script is run 24 times per day (every
+hour). This amount can be changed in the admin interface, and a single
+run can also be request as an action.
+
+
+Idea
+====
+
 This is a library that works as an abstraction layer between data
 sources (of any kind, in principle, but mostly those that have
 geographical locations and timeseries data), and frontend clients.
