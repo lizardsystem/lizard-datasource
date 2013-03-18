@@ -172,6 +172,10 @@ class DataSource(object):
             dsl.save()
             return dsl
 
+    def cache_script_is_due(self):
+        """Return True if it is time for the cache script."""
+        return self.datasource_model.cache_script_is_due()
+
     def set_choices_made(self, choices_made):
         self._choices_made = choices_made
 

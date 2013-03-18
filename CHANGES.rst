@@ -5,7 +5,11 @@ Changelog of lizard-datasource
 0.6 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Make it possible to run the cache script from the admin interface
+  (assuming the cronjob runs every minute)
+- Improve the datasource model admin pages
+- It's now possible to configure the number of times the cache script
+  runs from the admin interface
 
 
 0.5 (2013-03-05)

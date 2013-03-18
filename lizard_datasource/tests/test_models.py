@@ -1,4 +1,6 @@
+import datetime
 import factory
+import mock
 
 from django.test import TestCase
 from lizard_datasource import models
@@ -13,6 +15,10 @@ class DatasourceModelF(factory.Factory):
     identifier = "some_identifier"
     originating_app = "lizard_datasource_tests"
     visible = True
+
+    script_times_to_run_per_day = 24
+    script_last_run_started = None
+    script_run_next_opportunity = False
 
 
 class DatasourceLayerF(factory.Factory):
@@ -57,6 +63,54 @@ class ColorMapLineF(factory.Factory):
 class TestDatasourceModel(TestCase):
     def test_has_unicode(self):
         self.assertTrue(unicode(DatasourceModelF.build()))
+
+    def test_cache_script_is_due_if_not_run_yet(self):
+        # Say it's 0:30 AM now and it hasn't run yet, it should
+        dt = datetime.datetime.now().replace(hour=0, minute=30)
+
+        self.assertTrue(DatasourceModelF.build(
+                script_times_to_run_per_day=24,
+                script_last_run_started=None,
+                script_run_next_opportunity=False).cache_script_is_due(dt))
+
+    def test_cache_script_is_due_if_last_run_was_earlier(self):
+        """We have to run each hour, it's 1:05 am and the last run was at
+        0:05 am."""
+        dtnow = datetime.datetime.now().replace(hour=1, minute=5)
+        dtlast = datetime.datetime.now().replace(hour=0, minute=5)
+
+        self.assertTrue(DatasourceModelF.build(
+                script_times_to_run_per_day=24,
+                script_last_run_started=dtlast,
+                script_run_next_opportunity=False).cache_script_is_due(dtnow))
+
+    def test_cache_script_is_not_due_if_last_run_was_later(self):
+        """It's 1:10am, the last run was at 1:05am."""
+        dtnow = datetime.datetime.now().replace(hour=1, minute=10)
+        dtlast = datetime.datetime.now().replace(hour=1, minute=5)
+
+        self.assertFalse(DatasourceModelF.build(
+                script_times_to_run_per_day=24,
+                script_last_run_started=dtlast,
+                script_run_next_opportunity=False).cache_script_is_due(dtnow))
+
+    def test_cache_script_is_due_if_requested(self):
+        dtnow = datetime.datetime.now().replace(hour=1, minute=10)
+        dtlast = datetime.datetime.now().replace(hour=1, minute=5)
+
+        self.assertTrue(DatasourceModelF.build(
+                script_times_to_run_per_day=24,
+                script_last_run_started=dtlast,
+                script_run_next_opportunity=True).cache_script_is_due(dtnow))
+
+    def test_cache_script_doesnt_run_if_0_times_per_day(self):
+        dtnow = datetime.datetime.now().replace(hour=1, minute=10)
+        dtlast = datetime.datetime.now().replace(hour=0, minute=5)
+
+        self.assertFalse(DatasourceModelF.build(
+                script_times_to_run_per_day=0,
+                script_last_run_started=dtlast,
+                script_run_next_opportunity=False).cache_script_is_due(dtnow))
 
 
 class TestDatasourceLayer(TestCase):

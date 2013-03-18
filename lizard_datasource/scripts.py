@@ -46,6 +46,14 @@ def cache_latest_values(ds):
             properties.DATA_CAN_HAVE_VALUE_LAYER_SCRIPT)):
         return  # For now, we don't know what to do in this case
 
+    now = datetime.datetime.now()
+    if not ds.cache_script_is_due(now):
+        return
+
+    ds.script_last_run_started = now
+    ds.script_run_next_opportunity = False
+    ds.save()
+
     for layer in _yield_layers(ds):
         # This creates the datasource layer in the database, if it
         # didn't exist yet

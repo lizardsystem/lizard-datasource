@@ -30,10 +30,44 @@ class DatasourceModel(models.Model):
     # have one of those
     visible = models.BooleanField(default=False)
 
+    # There is a 'cache latest values' script that runs now and then
+    script_times_to_run_per_day = models.IntegerField(default=24)
+    script_last_run_started = models.DateTimeField(null=True)
+    script_run_next_opportunity = models.BooleanField(default=False)
+
     def __unicode__(self):
         return "'{0}' from app '{1}'".format(
             self.identifier,
             self.originating_app)
+
+    def cache_script_is_due(self, current_time):
+        if self.script_run_next_opportunity:
+            return True
+
+        if self.script_last_run_started is None:
+            return True
+
+        if not (0 < self.script_times_to_run_per_day <= (24 * 60)):
+            return False
+
+        minutes_between_scripts = (
+            (60 * 24) // self.script_times_to_run_per_day)
+
+        minutes_since_midnight = (
+            60 * current_time.hour + current_time.minute)
+
+        script_should_run_at_minutes = (
+            minutes_since_midnight -
+            (minutes_since_midnight % minutes_between_scripts))
+
+        script_should_run_at = current_time.replace(
+            hour=script_should_run_at_minutes // 60,
+            minute=script_should_run_at_minutes % 60)
+
+        return script_should_run_at > self.script_last_run_started
+
+    class Meta:
+        ordering = ('originating_app', 'identifier')
 
 
 class DatasourceLayer(models.Model):
