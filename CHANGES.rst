@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.6 (unreleased)
+0.6 (2013-03-19)
 ----------------
 
 - If the cache_latest_values script runs every minute, it is now possible
