@@ -1,4 +1,4 @@
 Credits
 =======
 
-- TODO started this library
+- Remco Gerlich started this library

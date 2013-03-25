@@ -27,7 +27,7 @@ tests_require = [
 
 setup(name='lizard-datasource',
       version=version,
-      description="TODO",
+      description="Abstraction layer between data sources",
       long_description=long_description,
       # Get strings from http://www.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[],
@@ -47,7 +47,8 @@ setup(name='lizard-datasource',
           ],
           'lizard_datasource': [
             'dummy_datasource = lizard_datasource.dummy_datasource:factory',
-       'augmented_datasource = lizard_datasource.augmented_datasource:factory',
+            ('augmented_datasource = ' +
+             'lizard_datasource.augmented_datasource:factory'),
             ],
           }
       )
