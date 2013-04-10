@@ -5,7 +5,29 @@ Changelog of lizard-datasource
 0.7 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Change Timeseries object so that it can contain multiple timeseries.
+
+- Add an ExtraGraphLine possibility to AugmentedDatasource so that it
+  can return multiple-valued timeseries.
+
+- Create IdentifierMappings because the IDs of both layers may not
+  match.
+
+- Create ProximityMappings, automatically created IdentifierMappings based
+  on matching locations to the closests locations in the other layer.
+
+- Call a script to create these from the admin interface.
+
+- Give nicknames to DatasourceLayers, and only choose from nicknames
+  when configuring ColorFromLatestValue, PercentileLayer or
+  ExtraGraphLine options.
+
+- Fix a bug in running the cache_latest_values script -- the stored datetime
+  at which the script last ran was stored timezone-aware, but the calculations
+  weren't, which led to an exception.
+
+- Only create proximity mappings if a match is found within some
+  maximum distance.
 
 
 0.6 (2013-03-19)

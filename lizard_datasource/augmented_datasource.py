@@ -18,6 +18,8 @@ from __future__ import absolute_import, division
 
 import logging
 
+from lizard_map import coordinates
+
 from lizard_datasource import datasource
 from lizard_datasource import models
 
@@ -149,7 +151,7 @@ class AugmentedDataSource(datasource.DataSource):
             return None
 
     def locations(self, bare=False):
-        locations = list(self.original_datasource.locations(bare=bare))
+        locations = self.original_datasource.locations(bare=bare)
 
         if bare:
             for location in locations:
@@ -181,20 +183,38 @@ class AugmentedDataSource(datasource.DataSource):
 
     def location_annotations(self):
         """If we have colors, we should have a legend for them."""
-        logger.debug("IN ANNOTATIONS")
+
         colorfrom = self._colorfrom()
         if not colorfrom:
             return None
-        logger.debug("HAVE COLORFROM")
+
         annotations = {
             'color': colorfrom.colormap.legend()
             }
-        logger.debug("ANNOTATIONS: {0}".format(annotations))
+
         return annotations
 
     def timeseries(self, location_id, start_datetime=None, end_datetime=None):
-        return self.original_datasource.timeseries(
+        timeseries = self.original_datasource.timeseries(
             location_id, start_datetime, end_datetime)
+
+        for extra_graph_line in models.ExtraGraphLine.objects.filter(
+            layer_to_add_line_to=self.datasource_layer):
+            extra_identifier = extra_graph_line.map_identifier(location_id)
+            if not extra_identifier:
+                # There is a mapping, but this ID isn't found in it -- skip
+                continue
+
+            # Get datasource to get the extra timeseries from
+            source = datasource.get_datasource_by_layer(
+                extra_graph_line.layer_to_get_line_from)
+            extra_timeseries = source.timeseries(
+                extra_identifier,
+                start_datetime, end_datetime)
+            if extra_timeseries:
+                timeseries = timeseries.add(extra_timeseries)
+
+        return timeseries
 
     def has_percentiles(self):
         return models.PercentileLayer.objects.filter(
@@ -221,3 +241,33 @@ def factory():
     return [AugmentedDataSource(config_object)
             for config_object in models.AugmentedDataSource.objects.all()]
 
+
+def fill_mapping_with_closest_locations(augmented_datasource_model):
+    for extra_graph_line in (
+        augmented_datasource_model.extragraphline_set.all()):
+        if not extra_graph_line.identifier_mapping:
+            # Skip
+            continue
+
+        datasource_to = datasource.get_datasource_by_layer(
+            extra_graph_line.layer_to_add_line_to)
+        datasource_from = datasource.get_datasource_by_layer(
+            extra_graph_line.layer_to_get_line_from)
+
+        location_dict_to = dict(
+            (l.identifier,
+             coordinates.wgs84_to_rd(l.latitude, l.longitude))
+            for l in datasource_to.locations())
+
+        location_dict_from = dict(
+            (l.identifier,
+             coordinates.wgs84_to_rd(l.latitude, l.longitude))
+            for l in datasource_from.locations())
+
+        # To add data FROM layer X to another layer Y, we need to be
+        # able to translate identifiers FROM layer Y TO layer X. So
+        # it's right that from and to are reversed.
+        extra_graph_line.identifier_mapping.create_proximity_map(
+            identifiers_from=location_dict_to,
+            identifiers_to=location_dict_from,
+            max_distance=extra_graph_line.max_distance_for_mapping)

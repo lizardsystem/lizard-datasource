@@ -24,11 +24,13 @@ def _yield_layers(ds):
             yield ds
         else:
             criteria = ds.chooseable_criteria()
-
+            print("CHOICES_MADE: {0}".format(choices_made))
             if criteria:
                 criterion = criteria[0]['criterion']
+                print("CRITERION: {0}".format(criterion))
                 options = criteria[0]['options']
                 for option in options.iter_options():
+                    print("CHOICE: {0}".format(option))
                     choices_mades.append(choices_made.add(
                             criterion.identifier, option.identifier))
 
@@ -62,17 +64,6 @@ def cache_latest_values(ds):
 
         locations = layer.locations()
         for location in locations:
-            print(
-                "Getting timeseries for location {0}."
-                .format(location.identifier))
-            timeseries = layer.timeseries(
-                location.identifier,
-                start_datetime=dates.utc_now() - datetime.timedelta(days=60),
-                end_datetime=dates.utc_now())
-            if timeseries is None or len(timeseries) == 0:
-                continue
-
-            latest = timeseries.latest()
             try:
                 cache = models.DatasourceCache.objects.get(
                     datasource_layer=datasource_layer,
@@ -81,9 +72,22 @@ def cache_latest_values(ds):
                 cache = models.DatasourceCache(
                     datasource_layer=datasource_layer,
                     locationid=location.identifier)
+
+            if cache.timestamp:
+                start_datetime = cache.timestamp
+            else:
+                start_datetime = dates.utc_now() - datetime.timedelta(days=60)
+
+            timeseries = layer.timeseries(
+                location.identifier,
+                start_datetime=start_datetime,
+                end_datetime=dates.utc_now())
+            if timeseries is None or len(timeseries) == 0:
+                continue
+
+            latest = timeseries.latest()
+
             cache.timestamp = latest.keys()[0]
             cache.value = latest[0]
-            print("Saving value {0} for timestamp {1}.".format(
-                    latest[0], latest.keys()[0]))
             cache.save()
             time.sleep(1)

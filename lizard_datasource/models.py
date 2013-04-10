@@ -2,12 +2,15 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
-import datetime
 import logging
+import math
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 import colorful.fields
+
+from lizard_datasource import dates
+
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +52,7 @@ class DatasourceModel(models.Model):
         and that is recorded."""
 
         if self.cache_script_is_due():
-            self.script_last_run_started = datetime.datetime.now()
+            self.script_last_run_started = dates.utc_now()
             self.script_run_next_opportunity = False
             self.save()
             return True
@@ -69,7 +72,7 @@ class DatasourceModel(models.Model):
         minutes_between_scripts = (
             (60 * 24) // self.script_times_to_run_per_day)
 
-        current_time = datetime.datetime.now()
+        current_time = dates.utc_now()
 
         minutes_since_midnight = (
             60 * current_time.hour + current_time.minute)
@@ -82,6 +85,8 @@ class DatasourceModel(models.Model):
             hour=script_should_run_at_minutes // 60,
             minute=script_should_run_at_minutes % 60)
 
+        print(script_should_run_at.tzinfo)
+        print(self.script_last_run_started.tzinfo)
         return script_should_run_at > self.script_last_run_started
 
     class Meta:
@@ -102,7 +107,22 @@ class DatasourceLayer(models.Model):
     # JSON.
     choices_made = models.TextField()
 
+    # Only layers that have been given nicknames can be chosen in the admin
+    # to use for other purposes; nicknames should be Python identifiers.
+    nickname = models.CharField(max_length=30, null=True, blank=True)
+
+    # Helpful Q object
+    Q_ONLY_WITH_NICKNAME = (
+        models.Q(nickname__isnull=False) &
+        ~(models.Q(nickname__exact="")))
+
+    class Meta:
+        ordering = ('nickname', 'datasource_model', 'choices_made')
+
     def __unicode__(self):
+        if self.nickname:
+            return self.nickname
+
         return "{0}: {1}".format(self.datasource_model, self.choices_made)
 
     @property
@@ -110,6 +130,13 @@ class DatasourceLayer(models.Model):
         """The only thing that latest values are used for as yet is
         for ColorFromLatestValue."""
         return self.colors_used_by.exists()
+
+    def save(self, *args, **kwargs):
+        """In case of a missing nickname, we want it to be NULL. Not
+        sometimes NULL and sometimes ''."""
+        if not self.nickname:
+            self.nickname = None
+        return super(DatasourceLayer, self).save(*args, **kwargs)
 
 
 class DatasourceCache(models.Model):
@@ -127,6 +154,10 @@ class AugmentedDataSource(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    def create_proximity_mapping(self):
+        for extra_graph_line in self.extragraphline_set.all():
+            extra_graph_line.create_proximity_mapping()
 
 
 class ColorMap(models.Model):
@@ -160,9 +191,11 @@ class ColorMap(models.Model):
 class ColorFromLatestValue(models.Model):
     augmented_source = models.ForeignKey(AugmentedDataSource)
     layer_to_add_color_to = models.ForeignKey(
-        DatasourceLayer, related_name="colors_from")
+        DatasourceLayer, related_name="colors_from",
+        limit_choices_to=DatasourceLayer.Q_ONLY_WITH_NICKNAME)
     layer_to_get_color_from = models.ForeignKey(
-        DatasourceLayer, null=True, related_name="colors_used_by")
+        DatasourceLayer, null=True, related_name="colors_used_by",
+        limit_choices_to=DatasourceLayer.Q_ONLY_WITH_NICKNAME)
     colormap = models.ForeignKey(ColorMap)
     hide_from_layer = models.BooleanField(default=False)
 
@@ -170,11 +203,33 @@ class ColorFromLatestValue(models.Model):
 class PercentileLayer(models.Model):
     augmented_source = models.ForeignKey(AugmentedDataSource)
     layer_to_add_percentile_to = models.ForeignKey(
-        DatasourceLayer, related_name="percentiles_from")
+        DatasourceLayer, related_name="percentiles_from",
+        limit_choices_to=DatasourceLayer.Q_ONLY_WITH_NICKNAME)
     layer_to_get_percentile_from = models.ForeignKey(
-        DatasourceLayer, related_name="percentiles_used_by")
+        DatasourceLayer, related_name="percentiles_used_by",
+        limit_choices_to=DatasourceLayer.Q_ONLY_WITH_NICKNAME)
     percentile = models.FloatField(default=0.0)
     hide_from_layer = models.BooleanField(default=False)
+
+
+class ExtraGraphLine(models.Model):
+    augmented_source = models.ForeignKey(AugmentedDataSource)
+    layer_to_add_line_to = models.ForeignKey(
+        DatasourceLayer, related_name="extra_graph_line_from",
+        limit_choices_to=DatasourceLayer.Q_ONLY_WITH_NICKNAME)
+    layer_to_get_line_from = models.ForeignKey(
+        DatasourceLayer, related_name="extra_graph_line_to",
+        limit_choices_to=DatasourceLayer.Q_ONLY_WITH_NICKNAME)
+    hide_from_layer = models.BooleanField(default=False)
+    identifier_mapping = models.ForeignKey(
+        'IdentifierMapping', null=True, blank=True)
+    max_distance_for_mapping = models.FloatField(null=True, blank=True)
+
+    def map_identifier(self, identifier):
+        if not self.identifier_mapping:
+            return identifier
+        else:
+            return self.identifier_mapping.map(identifier)
 
 
 class ColorMapLine(models.Model):
@@ -230,3 +285,71 @@ class ColorMapLine(models.Model):
                 description = "{0} < {1}".format(description, self.maxvalue)
 
         return description
+
+
+class IdentifierMapping(models.Model):
+    """An identifier mapping can be used to map identifiers (like
+    location-ids from some layer) to other identifier (like
+    location-ids from some other layer)."""
+
+    name = models.CharField(
+        max_length=30, null=False, blank=False, unique=True)
+
+    def map(self, identifier):
+        try:
+            line = IdentifierMappingLine.objects.get(
+                mapping=self,
+                identifier_from=identifier)
+            return line.identifier_to
+        except IdentifierMappingLine.DoesNotExist:
+            return None
+
+    def map_to(self, identifier_from, identifier_to):
+        line, created = IdentifierMappingLine.objects.get_or_create(
+            mapping=self, identifier_from=identifier_from)
+        line.identifier_to = identifier_to
+        line.save()
+
+    def create_proximity_map(
+        self, identifiers_from, identifiers_to, max_distance):
+        """Identifiers_from and identifiers_to are dicts, with
+        identifiers as keys and (X, Y) coordinates as values. The
+        projection of the coordinates must be such that the distance
+        between two points can be calculated as
+        sqrt((X1-X2)**2+(Y1-Y2)**2).
+
+        For each identifier in identifiers_from, calculate the point
+        in identifiers_to that is closest to it, and add an
+        identifiermapping line for it."""
+        def distance(p1, p2):
+            return math.sqrt((p1[0] - p2[0]) ** 2 +
+                             (p1[1] - p2[1]) ** 2)
+
+        if not identifiers_to:
+            return
+
+        for identifier, p1 in identifiers_from.items():
+            # Find closest point
+            mindistance, closest_identifier_to = min(
+                (distance(p1, p2), identifier_to)
+                for identifier_to, p2 in identifiers_to.items())
+
+            # If it is in range, map it
+            if not max_distance or mindistance <= max_distance:
+                self.map_to(identifier, closest_identifier_to)
+
+    def __unicode__(self):
+        return self.name
+
+
+class IdentifierMappingLine(models.Model):
+    mapping = models.ForeignKey(IdentifierMapping)
+
+    identifier_from = models.CharField(max_length=100)
+    identifier_to = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('mapping', 'identifier_from')
+
+    def __unicode__(self):
+        return "{0} -> {1}".format(self.identifier_from, self.identifier_to)

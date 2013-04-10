@@ -303,7 +303,7 @@ class DataSource(object):
 
         If it doesn't, this function returns None, or {}.
 
-        If it does, this function returns a dictionaries with the
+        If it does, this function returns a dictionary with the
         field names as keys.  The values are either None (in which
         case this just serves to note that the field exists) or a list
         of tuples of the form (value, description), which can be
