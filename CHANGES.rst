@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.7 (unreleased)
+0.7 (2013-04-10)
 ----------------
 
 - Change Timeseries object so that it can contain multiple timeseries.
