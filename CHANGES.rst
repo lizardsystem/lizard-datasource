@@ -2,8 +2,8 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.9 (unreleased)
-----------------
+0.8.1 (2013-04-11)
+------------------
 
 - Forgot to add the migration for unit_cache.
 
