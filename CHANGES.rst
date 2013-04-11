@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.8 (unreleased)
+0.8 (2013-04-11)
 ----------------
 
 - Add a 'unit_cache' field to datasource layer, so that it doesn't
