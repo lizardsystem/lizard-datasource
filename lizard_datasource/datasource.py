@@ -273,6 +273,24 @@ class DataSource(object):
         Optional. This function is allowed to simply return None."""
         return None
 
+    def cached_unit(self):
+        """A description (legend) for the timeseries returned by this
+        datasource. Only defined if unit() is also defined. Returns
+        a tuple of strings, because timeseries may be multi-valued and
+        in that case there should be a separate description for each value.
+
+        This is used in the legend of graphs, and as column header for
+        DataFrames.
+        """
+        layer = self.datasource_layer
+
+        if not layer.unit_cache:
+            layer.unit_cache = self.unit()
+            if layer.unit_cache:
+                layer.save()
+
+        return (layer.unit_cache,)
+
     def has_property(self, property):
         """Does the datasource have this property? See properties.py
         for a list."""

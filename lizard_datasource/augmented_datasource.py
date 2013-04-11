@@ -153,22 +153,22 @@ class AugmentedDataSource(datasource.DataSource):
     def locations(self, bare=False):
         locations = self.original_datasource.locations(bare=bare)
 
-        if bare:
+        if not bare:
+            colorfrom = self._colorfrom()
+
+        if bare or not colorfrom:
             for location in locations:
                 yield location
             return
 
         cached_values = dict()
 
-        colorfrom = self._colorfrom()
-        if colorfrom:
-            # If there is a colorfrom, use it
-            colormap = colorfrom.colormap
-            if colorfrom.layer_to_get_color_from:
-                for cached_value in models.DatasourceCache.objects.filter(
-                    datasource_layer=colorfrom.layer_to_get_color_from):
-                    cached_values[cached_value.locationid] = (
-                        cached_value.value)
+        colormap = colorfrom.colormap
+        if colorfrom.layer_to_get_color_from:
+            for cached_value in models.DatasourceCache.objects.filter(
+                datasource_layer=colorfrom.layer_to_get_color_from):
+                cached_values[cached_value.locationid] = (
+                    cached_value.value)
 
         for location in locations:
             color = "888888"  # Default is gray
@@ -200,6 +200,7 @@ class AugmentedDataSource(datasource.DataSource):
 
         for extra_graph_line in models.ExtraGraphLine.objects.filter(
             layer_to_add_line_to=self.datasource_layer):
+
             extra_identifier = extra_graph_line.map_identifier(location_id)
             if not extra_identifier:
                 # There is a mapping, but this ID isn't found in it -- skip
@@ -212,7 +213,7 @@ class AugmentedDataSource(datasource.DataSource):
                 extra_identifier,
                 start_datetime, end_datetime)
             if extra_timeseries:
-                timeseries = timeseries.add(extra_timeseries)
+                timeseries.add(extra_timeseries)
 
         return timeseries
 

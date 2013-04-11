@@ -5,7 +5,17 @@ Changelog of lizard-datasource
 0.8 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Add a 'unit_cache' field to datasource layer, so that it doesn't
+  have to be retrieved from FEWS etc all the time, and so that it can
+  be edited in the admin.
+
+- Let the cache_latest_values script also fill the unit_cache.
+
+- Do not set a default color in lizard-datasource if there is no
+  coloring, leave that to frontend apps.
+
+- Use layer units as column names for DataFrames. Keep track of the right order
+  of column names, because DateFrame doesn't.
 
 
 0.7 (2013-04-10)

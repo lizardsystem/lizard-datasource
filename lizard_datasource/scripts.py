@@ -57,6 +57,9 @@ def cache_latest_values(ds):
         # didn't exist yet
         datasource_layer = layer.datasource_layer
 
+        # Cache the datasource layer's unit, if it wasn't filled in yet
+        layer.cached_unit()
+
         # If we don't actually use the latest values of this layer, we
         # should skip it.
         if not datasource_layer.latest_values_used:

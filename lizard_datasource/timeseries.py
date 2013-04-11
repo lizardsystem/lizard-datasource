@@ -1,5 +1,5 @@
 """Module for the Timeseries class. It is a wrapper around a pandas
-timeseries."""
+DataFrame."""
 
 import logging
 import pandas
@@ -7,6 +7,7 @@ import pandas
 from itertools import izip
 
 from pandas import DataFrame
+from pandas import Series
 
 logger = logging.getLogger(__name__)
 
@@ -17,27 +18,35 @@ class Timeseries(object):
         """
         Can be called with either:
 
+        A DataFrame. Preferred.
+
         timeseries_dict, a dict with UTC datetimes as keys and floats
         as values.
 
-        A list of such dicts."""
+        A list of such dicts.
 
-        if isinstance(data, dict):
-            series = pandas.Series(data)
+        This works like a pandas DataFrame, except we keep track of
+        the order of column names."""
+
+        if isinstance(data, DataFrame):
+            self._dataframe = data
+            self._columns = tuple(data.columns)
+        elif isinstance(data, dict):
+            series = Series(data)
             self._dataframe = DataFrame({'data': series})
+            self._columns = ('data',)
         else:
             self._dataframe = DataFrame(dict([
                         ('data_{0}'.format(i), series)
                         for i, series in enumerate(data)]))
+            self._columns = tuple(
+                'data_{0}' for i, series in enumerate(data))
 
     def add(self, timeseries):
-        """Return a new Timeseries instance, with the columns from
-        this one and the added one."""
-        return Timeseries([
-                self._dataframe[columnname]
-                for columnname in self._dataframe.columns] + [
-                timeseries._dataframe[columnname]
-                for columnname in timeseries._dataframe.columns])
+        """Add the columns from timeseries to the dataframe of this
+        timeseries."""
+        self._dataframe = self._dataframe.combineAdd(timeseries._dataframe)
+        self._columns = self.columns + timeseries.columns
 
     @property
     def dataframe(self):
@@ -46,7 +55,14 @@ class Timeseries(object):
     @property
     def timeseries(self):
         """Return the first of the series in dataframe"""
-        return self._dataframe[self._dataframe.columns[0]].dropna()
+        return self._dataframe[self._columns[0]].dropna()
+
+    def get_series(self, columnname):
+        return self._dataframe[columnname].dropna()
+
+    @property
+    def columns(self):
+        return self._columns
 
     def dates(self):
         return self.timeseries.keys()
@@ -62,4 +78,4 @@ class Timeseries(object):
                 for key, value in izip(self.dates(), self.values())]
 
     def __len__(self):
-        return len(self.timeseries) if self.timeseries is not None else 0
+        return len(self._dataframe) if self._dataframe is not None else 0

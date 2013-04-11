@@ -40,9 +40,10 @@ class DatasourceModelAdmin(admin.ModelAdmin):
 
 
 class DatasourceLayerAdmin(admin.ModelAdmin):
-    list_display = ['nickname', 'choices_made', 'datasource_model']
+    list_display = [
+        'nickname', 'unit_cache', 'choices_made', 'datasource_model']
     list_display_links = ['choices_made', 'datasource_model']
-    list_editable = ['nickname']
+    list_editable = ['nickname', 'unit_cache']
 
 
 class ColorFromLatestValueInline(admin.TabularInline):

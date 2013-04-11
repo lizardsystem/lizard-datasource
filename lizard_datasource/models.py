@@ -111,6 +111,10 @@ class DatasourceLayer(models.Model):
     # to use for other purposes; nicknames should be Python identifiers.
     nickname = models.CharField(max_length=30, null=True, blank=True)
 
+    # Finding the unit of a layer can take quite a lot of time, it's
+    # cached here.  Also allows editing it in the admin interface.
+    unit_cache = models.CharField(max_length=100, null=True, blank=True)
+
     # Helpful Q object
     Q_ONLY_WITH_NICKNAME = (
         models.Q(nickname__isnull=False) &
