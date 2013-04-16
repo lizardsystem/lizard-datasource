@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.9 (unreleased)
+0.9 (2013-04-16)
 ----------------
 
 - Fix #4, which was partly due to AugmentedDataSource.unit() not
