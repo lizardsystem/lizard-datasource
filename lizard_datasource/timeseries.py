@@ -40,7 +40,7 @@ class Timeseries(object):
                         ('data_{0}'.format(i), series)
                         for i, series in enumerate(data)]))
             self._columns = tuple(
-                'data_{0}' for i, series in enumerate(data))
+                'data_{0}'.format(i) for i, series in enumerate(data))
 
     def add(self, timeseries):
         """Add the columns from timeseries to the dataframe of this

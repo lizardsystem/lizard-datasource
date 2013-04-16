@@ -279,9 +279,12 @@ class TestDatasourceEntrypointsFunction(TestCase):
         # get something in return
         with mock.patch(
             'pkg_resources.iter_entry_points', return_value=iter([2, 3, 4])):
-            self.assertEquals(
-                datasource.datasource_entrypoints(),
-                (2, 3, 4))
+            self.assertTrue(
+                datasource.datasource_entrypoints())
+
+            # Note that we can't check if the return value is equal to
+            # (2, 3, 4), because the function may have been called
+            # earlier, and it's memoized.
 
 
 class TestDatasourcesFromEntrypointsFunction(TestCase):

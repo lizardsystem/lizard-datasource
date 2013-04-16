@@ -5,7 +5,9 @@ Changelog of lizard-datasource
 0.9 (unreleased)
 ----------------
 
-- Nothing changed yet.
+- Fix #4, which was partly due to AugmentedDataSource.unit() not
+  accepting calls without argument, and partly due to bad
+  configuration. Added and fixed tests.
 
 
 0.8.1 (2013-04-11)

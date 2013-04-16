@@ -139,7 +139,7 @@ class AugmentedDataSource(datasource.DataSource):
     def is_drawable(self, choices_made):
         return self.original_datasource.is_drawable(choices_made)
 
-    def unit(self, choices_made):
+    def unit(self, choices_made=None):
         return self.original_datasource.unit(choices_made)
 
     def _colorfrom(self):
