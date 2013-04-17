@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.10 (unreleased)
+0.10 (2013-04-17)
 -----------------
 
 - If there is more than one augmented datasource configured and
