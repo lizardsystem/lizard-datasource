@@ -10,7 +10,7 @@ from lizard_datasource import properties
 logger = logging.getLogger(__name__)
 
 
-def _yield_layers(ds):
+def _yield_drawable_datasources(ds):
     # This implements a breadth-first search that tries to visit all
     # drawable layers and yields their choices made objects. The case
     # where ChoicesMade is empty functions as the root of the tree.
@@ -52,20 +52,20 @@ def cache_latest_values(ds):
     if not ds.activation_for_cache_script():
         return
 
-    for layer in _yield_layers(ds):
+    for drawable in _yield_drawable_datasources(ds):
         # This creates the datasource layer in the database, if it
         # didn't exist yet
-        datasource_layer = layer.datasource_layer
+        datasource_layer = drawable.datasource_layer
 
         # Cache the datasource layer's unit, if it wasn't filled in yet
-        layer.cached_unit()
+        drawable.cached_unit()
 
         # If we don't actually use the latest values of this layer, we
         # should skip it.
         if not datasource_layer.latest_values_used:
             continue
 
-        locations = layer.locations()
+        locations = drawable.locations()
         for location in locations:
             try:
                 cache = models.DatasourceCache.objects.get(
@@ -81,7 +81,7 @@ def cache_latest_values(ds):
             else:
                 start_datetime = dates.utc_now() - datetime.timedelta(days=60)
 
-            timeseries = layer.timeseries(
+            timeseries = drawable.timeseries(
                 location.identifier,
                 start_datetime=start_datetime,
                 end_datetime=dates.utc_now())

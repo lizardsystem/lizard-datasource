@@ -226,8 +226,12 @@ class TestCombinedDatasource(TestCase):
             ds = dummy_datasource.DummyDataSource()
             cds = datasource.CombinedDataSource([ds])
             choices_made = datasource.ChoicesMade()
-            self.assertTrue(cds.is_drawable(choices_made))
-            mocked.assert_called_with(choices_made)
+            mocked  # pyflakes
+            # I've turned off the drawability of combined data sources
+            # for now, because of too many bugs.
+            self.assertFalse(cds.is_drawable(choices_made))
+            #self.assertTrue(cds.is_drawable(choices_made))
+            #mocked.assert_called_with(choices_made)
 
     def test_unit_returns_unit_of_datasources_if_unique(self):
         with mock.patch(

@@ -5,7 +5,9 @@ Changelog of lizard-datasource
 0.10 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- If there is more than one augmented datasource configured and
+  visible, things got a bit confused; created the expand() function to
+  make datasources behave similarly in both situations.
 
 
 0.9 (2013-04-16)

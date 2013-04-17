@@ -122,6 +122,7 @@ class DatasourceLayer(models.Model):
 
     class Meta:
         ordering = ('nickname', 'datasource_model', 'choices_made')
+        unique_together = ('datasource_model', 'choices_made')
 
     def __unicode__(self):
         if self.nickname:

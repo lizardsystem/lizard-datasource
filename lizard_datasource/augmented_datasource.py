@@ -234,6 +234,9 @@ class AugmentedDataSource(datasource.DataSource):
 
         return percentiles
 
+    def expand(self, choices_made):
+        return self.original_datasource.expand(choices_made)
+
 
 def factory():
     """Return an AugmentedDataSource object for each

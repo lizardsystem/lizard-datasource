@@ -12,6 +12,6 @@ class TestYieldLayers(TestCase):
     def test_drawable_datasource_returned(self):
         ds = mock.MagicMock()
         ds.is_drawable.return_value = True
-        layers = list(scripts._yield_layers(ds))
+        layers = list(scripts._yield_drawable_datasources(ds))
         self.assertEquals(len(layers), 1)
         self.assertTrue(layers[0] is ds)

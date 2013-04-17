@@ -93,8 +93,8 @@ class ChoicesMade(object):
     def json(self):
         """Return a JSON representation of this ChoicesMade instance.
 
-        The keys are always sorted, and two equal ChoicesMade instances have equal
-        JSON representations, and vice versa.
+        The keys are always sorted, and two equal ChoicesMade
+        instances have equal JSON representations, and vice versa.
 
         E.g., for two choicesmades 'a' and 'b',
 
@@ -155,22 +155,17 @@ class DataSource(object):
     def datasource_layer(self):
         """Return the DatasourceLayer model instance that relates to
         this datasource and the curently set ChoicesMade. Create the
-        instance if it doesn't exist yet."""
+        instance if it doesn't exist yet.
+
+        Should only be called on drawable datasources."""
 
         # Don't cache, because choices_made is mutated regularly.
-        json = self._choices_made.json()
+        json = self.get_choices_made().json()
         dsm = self.datasource_model
 
-        try:
-            return models.DatasourceLayer.objects.get(
-                datasource_model=dsm,
-                choices_made=json)
-        except models.DatasourceLayer.DoesNotExist:
-            dsl = models.DatasourceLayer(
-                datasource_model=dsm,
-                choices_made=json)
-            dsl.save()
-            return dsl
+        dsl, created = models.DatasourceLayer.objects.get_or_create(
+            datasource_model=dsm, choices_made=json)
+        return dsl
 
     def activation_for_cache_script(self):
         """Return True if the cache script should active. If it shouldn't,
@@ -184,7 +179,7 @@ class DataSource(object):
         self._choices_made = choices_made
 
     def get_choices_made(self):
-        return self._choices_made
+        return self.expand(self._choices_made)
 
     def criteria(self):
         return ()
@@ -331,6 +326,16 @@ class DataSource(object):
     def has_percentiles(self):
         return False
 
+    def expand(self, choices_made):
+        """Expand the choices_made object with choices that have
+        apparently been chosen implicitly. For instance, if this
+        function is called on the datasource implementation
+        representing a single FEWS JDBC slug, then apparently that
+        slug has been chosen already, if it's not explicitly in the
+        choices_made object. You may ignore this function if you don't
+        understand it."""
+        return choices_made
+
 
 class CombinedDataSource(DataSource):
     """If there are several visible datasources in the system, a
@@ -408,11 +413,10 @@ class CombinedDataSource(DataSource):
         """Return True if some of our constituents can draw themselves
         given these choices"""
 
-        if choices_made is None:
-            choices_made = self._choices_made
-
-        return any(ds.is_drawable(choices_made)
-                   for ds in self._datasources)
+        # For now, we never draw combined datasources until that has
+        # been developed correctly. Too many bugs. You have to choose
+        # a slug first, if there are multiple data sources.
+        return False
 
     def unit(self, choices_made=None):
         """If the constituent data sources all give the same answer,
