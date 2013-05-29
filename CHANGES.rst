@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.11 (unreleased)
+0.11 (2013-05-29)
 -----------------
 
 - Fix shaky UTC handling in cache_script_due()
