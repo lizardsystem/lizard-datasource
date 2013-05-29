@@ -85,9 +85,8 @@ class DatasourceModel(models.Model):
             hour=script_should_run_at_minutes // 60,
             minute=script_should_run_at_minutes % 60)
 
-        print(script_should_run_at.tzinfo)
-        print(self.script_last_run_started.tzinfo)
-        return script_should_run_at > self.script_last_run_started
+        return (
+            script_should_run_at > dates.to_utc(self.script_last_run_started))
 
     class Meta:
         ordering = ('originating_app', 'identifier')
