@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-0.12 (unreleased)
+0.12 (2013-06-06)
 -----------------
 
 - Reworked label/unit handling. Labels are now only stored as column
