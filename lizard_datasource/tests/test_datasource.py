@@ -233,36 +233,6 @@ class TestCombinedDatasource(TestCase):
             #self.assertTrue(cds.is_drawable(choices_made))
             #mocked.assert_called_with(choices_made)
 
-    def test_unit_returns_unit_of_datasources_if_unique(self):
-        with mock.patch(
-  'lizard_datasource.dummy_datasource.DummyDataSource.unit',
-            return_value="mm"):
-            ds1 = dummy_datasource.DummyDataSource()
-            ds2 = dummy_datasource.DummyDataSource()
-
-            cds = datasource.CombinedDataSource([ds1, ds2])
-            self.assertEquals(cds.unit(), "mm")
-
-    def test_unit_returns_none_if_no_datasources(self):
-        cds = datasource.CombinedDataSource([])
-        self.assertEquals(cds.unit(), None)
-
-    def test_unit_returns_none_if_different_units(self):
-        options = ["mm", "millimeter"]
-
-        def side_effect(*args, **kwargs):
-            return options.pop(0)
-
-        with mock.patch(
-  'lizard_datasource.dummy_datasource.DummyDataSource.options_for_criterion',
-            side_effect=side_effect):
-            ds1 = dummy_datasource.DummyDataSource()
-            ds2 = dummy_datasource.DummyDataSource()
-
-            cds = datasource.CombinedDataSource([ds1, ds2])
-
-            self.assertEquals(cds.unit(), None)
-
     def test_does_not_have_property_with_no_datasources(self):
         cds = datasource.CombinedDataSource([])
         self.assertFalse(cds.has_property("TESTING"))

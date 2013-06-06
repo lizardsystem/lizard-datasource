@@ -5,7 +5,11 @@ Changelog of lizard-datasource
 0.12 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Reworked label/unit handling. Labels are now only stored as column
+  names in the timeserie's DataFrames, they only exist in connection
+  with a timeseries. If there is both label and unit information, they
+  are stored as a string separated with '||'. Otherwise, it is assumed
+  there is only a label, no unit.
 
 
 0.11 (2013-05-29)

@@ -17,17 +17,6 @@ class TestAugmentedSource(TestCase):
             augmented_source.config_object,
             model_instance)
 
-    def test_can_call_unit_without_extra_arguments(self):
-        """Because that didn't work, some day..."""
-        with mock.patch(
-            'lizard_datasource.augmented_datasource.'
-            'AugmentedDataSource.original_datasource'):
-            model_instance = test_models.AugmentedDataSourceF.build()
-            augmented_source = augmented_datasource.AugmentedDataSource(
-                model_instance)
-
-            augmented_source.unit()
-
 
 class TestAugmentedSourceFactory(TestCase):
     def test_returns_source(self):

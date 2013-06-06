@@ -64,6 +64,14 @@ class Timeseries(object):
     def columns(self):
         return self._columns
 
+    def label(self, series_name):
+        """Only the part of the columns before '||'."""
+        return series_name.split('||')[0]
+
+    def unit(self, series_name):
+        """Only the part of the columns after '||', or None."""
+        return series_name.split('||')[1] if '||' in series_name else None
+
     def dates(self):
         return self.timeseries.keys()
 

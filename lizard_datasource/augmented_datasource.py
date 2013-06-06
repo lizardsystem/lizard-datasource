@@ -139,9 +139,6 @@ class AugmentedDataSource(datasource.DataSource):
     def is_drawable(self, choices_made):
         return self.original_datasource.is_drawable(choices_made)
 
-    def unit(self, choices_made=None):
-        return self.original_datasource.unit(choices_made)
-
     def _colorfrom(self):
         """Returns the used colorfromlatestvalue object, if any."""
         try:
@@ -207,8 +204,8 @@ class AugmentedDataSource(datasource.DataSource):
                 continue
 
             # Get datasource to get the extra timeseries from
-            source = datasource.get_datasource_by_layer(
-                extra_graph_line.layer_to_get_line_from)
+            layer_from = extra_graph_line.layer_to_get_line_from
+            source = datasource.get_datasource_by_layer(layer_from)
             extra_timeseries = source.timeseries(
                 extra_identifier,
                 start_datetime, end_datetime)

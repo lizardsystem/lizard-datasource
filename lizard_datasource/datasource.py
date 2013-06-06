@@ -256,36 +256,6 @@ class DataSource(object):
         """Can a datasource with these choices made be drawn on the map?"""
         return False
 
-    def unit(self, choices_made=None):
-        """Returns a unicode string describing the unit of the data
-        drawable by this datasource.
-
-        Should only be called if the datasource is_drawable with these
-        choices, because if there are still choices to be made before
-        a layer can be drawn, it is likely that the data has more than
-        one unit.
-
-        Optional. This function is allowed to simply return None."""
-        return None
-
-    def cached_unit(self):
-        """A description (legend) for the timeseries returned by this
-        datasource. Only defined if unit() is also defined. Returns
-        a tuple of strings, because timeseries may be multi-valued and
-        in that case there should be a separate description for each value.
-
-        This is used in the legend of graphs, and as column header for
-        DataFrames.
-        """
-        layer = self.datasource_layer
-
-        if not layer.unit_cache:
-            layer.unit_cache = self.unit()
-            if layer.unit_cache:
-                layer.save()
-
-        return (layer.unit_cache,)
-
     def has_property(self, property):
         """Does the datasource have this property? See properties.py
         for a list."""
@@ -417,18 +387,6 @@ class CombinedDataSource(DataSource):
         # been developed correctly. Too many bugs. You have to choose
         # a slug first, if there are multiple data sources.
         return False
-
-    def unit(self, choices_made=None):
-        """If the constituent data sources all give the same answer,
-        return it, otherwise return None."""
-        if choices_made is None:
-            choices_made = self._choices_made
-
-        units = set(ds.unit(choices_made) for ds in self._datasources)
-        if len(units) == 1:
-            return units.pop()
-        else:
-            return None
 
     def has_property(self, property):
         """CombinedDataSource has a property iff there are underlying
