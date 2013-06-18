@@ -2,11 +2,14 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
+import logging
+
 from django.core.management.base import BaseCommand
 
 from lizard_datasource import datasource
 from lizard_datasource import scripts
 
+logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     args = ''
@@ -18,4 +21,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for ds in datasource.datasources_from_entrypoints():
             print(ds)
-            scripts.cache_latest_values(ds)
+            try:
+                scripts.cache_latest_values(ds)
+            except:
+                logger.exception('skipping datasource {0}'.format(ds))
