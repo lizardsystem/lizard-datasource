@@ -58,7 +58,7 @@ def cache_latest_values(ds):
         datasource_layer = drawable.datasource_layer
 
         # Cache the datasource layer's unit, if it wasn't filled in yet
-        drawable.cached_unit()
+        drawable._cached_unit()
 
         # If we don't actually use the latest values of this layer, we
         # should skip it.
