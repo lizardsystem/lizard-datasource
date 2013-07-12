@@ -407,6 +407,20 @@ class CombinedDataSource(DataSource):
     def has_percentiles(self):
         pass
 
+    def cached_unit(self):
+        """Returns the unit_cache field of the datasource_layer.
+
+        That by itself isn't helpful. But this function is also called for
+        each layer in the cache_latest_values() script. By overriding this
+        function, it is possible to set a default unit_cache in case
+        the unit_cache wasn't filled in yet.
+
+        This function isn't used by lizard-datasource to find units --
+        they should be set as the timeseries names in
+        timeseries(). Timeseries() can of course call this function if
+        it wants to."""
+        return self.datasource_layer.unit_cache
+
 
 @memoize
 def datasource_entrypoints():
