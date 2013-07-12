@@ -5,7 +5,8 @@ Changelog of lizard-datasource
 0.13 (unreleased)
 -----------------
 
-- Nothing changed yet.
+- Add cached_unit() to base datasource. Does nothing, it is called
+  sometimes and subclasses can implement it to do something useful.
 
 
 0.12 (2013-06-06)
