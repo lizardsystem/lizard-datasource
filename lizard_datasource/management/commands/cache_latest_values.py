@@ -11,6 +11,7 @@ from lizard_datasource import scripts
 
 logger = logging.getLogger(__name__)
 
+
 class Command(BaseCommand):
     args = ''
     help = """Iterate over all data sources. If possible, retrieve the
