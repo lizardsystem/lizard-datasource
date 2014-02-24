@@ -407,7 +407,7 @@ class CombinedDataSource(DataSource):
         data source and they all the underlying data sources have the
         property."""
         return self._datasources and all(ds.has_property(property)
-                   for ds in self._datasources)
+                                         for ds in self._datasources)
 
     def locations(self):
         """Return locations from all the underlying datasources."""
