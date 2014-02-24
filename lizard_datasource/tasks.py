@@ -1,6 +1,6 @@
 from celery.task import task
 
-from lizard5_site.router import set_host
+from lizard_ui.multitenancy import set_host
 
 from lizard_datasource import datasource
 from lizard_datasource import scripts
