@@ -1,11 +1,11 @@
-from celery.task import task
+import logging
 
-from lizard_ui.multitenancy import set_host
+from celery.task import task
 
 from lizard_datasource import datasource
 from lizard_datasource import scripts
+from lizard_ui.multitenancy import set_host
 
-import logging
 
 logger = logging.getLogger(__name__)
 
