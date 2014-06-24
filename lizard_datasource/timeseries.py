@@ -60,6 +60,28 @@ class Timeseries(object):
     def get_series(self, columnname):
         return self._dataframe[columnname].dropna()
 
+    def to_csv(self, outfile, sep=',', timezone=None, date_format='%Y-%m-%d %H:%M',
+               header_date_format='Datum + tijd'):
+        """Note: changes the timezone of all datetimes!
+
+        Write the data of all timeseries to a CSV file."""
+
+        if timezone is not None:
+            self.set_timezone(timezone)
+            
+        headers = [header_date_format] + [
+            self.label_and_unit(column) for column in self.columns]
+
+        outfile.write(sep.join(headers) + "\n")
+
+        self._dataframe.to_csv(outfile, sep=sep, mode='a', header=None,
+                               date_format=date_format)
+
+    def set_timezone(self, timezone):
+        """Sets this timezone on all datetimes. Timezone is a pytz timezone
+        object."""
+        self._dataframe = self._dataframe.tz_convert(timezone)
+
     @property
     def columns(self):
         return self._columns
@@ -71,6 +93,13 @@ class Timeseries(object):
     def unit(self, series_name):
         """Only the part of the columns after '||', or None."""
         return series_name.split('||')[1] if '||' in series_name else None
+
+    def label_and_unit(self, series_name):
+        unit = self.unit(series_name)
+        if unit:
+            return "{} ({})".format(self.label(series_name), unit)
+        else:
+            return self.label(series_name)
 
     def dates(self):
         return self.timeseries.keys()

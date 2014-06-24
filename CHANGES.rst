@@ -8,6 +8,12 @@ Changelog of lizard-datasource
 - Add cached_unit() to base datasource. Does nothing, it is called
   sometimes and subclasses can implement it to do something useful.
 
+- Add to_csv(..) function for timeseries.
+
+- Convert timeseries to timezone from settings.py.
+
+- Test for to_csv(..) function.  
+
 
 0.12 (2013-06-06)
 -----------------
