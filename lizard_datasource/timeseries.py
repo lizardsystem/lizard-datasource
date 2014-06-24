@@ -65,15 +65,11 @@ class Timeseries(object):
         """Note: changes the timezone of all datetimes!
 
         Write the data of all timeseries to a CSV file."""
-
         if timezone is not None:
             self.set_timezone(timezone)
-            
         headers = [header_date_format] + [
             self.label_and_unit(column) for column in self.columns]
-
         outfile.write(sep.join(headers) + "\n")
-
         self._dataframe.to_csv(outfile, sep=sep, mode='a', header=None,
                                date_format=date_format)
 
