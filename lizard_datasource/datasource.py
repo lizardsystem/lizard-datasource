@@ -5,10 +5,9 @@ from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
 import itertools
+import json as jsonmodule
 import logging
 import pkg_resources
-
-from django.utils import simplejson
 
 from lizard_datasource import models
 from lizard_datasource import criteria
@@ -44,9 +43,11 @@ class ChoicesMade(object):
     """
 
     def __init__(self, json=None, dict=None, **kwargs):
+        # json is an unfortunate variable name, from when we used the simplejson
+        # module. Can't be changed as we use this elsewhere.
         if (json is not None) and (dict is None) and (kwargs == {}):
             # Initialize using JSON.
-            self._choices = simplejson.loads(json)
+            self._choices = jsonmodule.loads(json)
         elif (json is None) and (dict is not None) and (kwargs == {}):
             # Initialize using dict.
             self._choices = dict.copy()
@@ -100,7 +101,7 @@ class ChoicesMade(object):
 
         (a == b) == (a.json() == b.json())
         """
-        return simplejson.dumps(self._choices, sort_keys=True)
+        return jsonmodule.dumps(self._choices, sort_keys=True)
 
     def __unicode__(self):
         return "ChoicesMade(json={0})".format(
