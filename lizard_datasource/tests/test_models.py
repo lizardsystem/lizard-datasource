@@ -10,8 +10,9 @@ from lizard_datasource import models
 ## Factories, keep them in the same order as in models.py
 
 
-class DatasourceModelF(factory.Factory):
-    FACTORY_FOR = models.DatasourceModel
+class DatasourceModelF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.DatasourceModel
 
     identifier = "some_identifier"
     originating_app = "lizard_datasource_tests"
@@ -22,33 +23,38 @@ class DatasourceModelF(factory.Factory):
     script_run_next_opportunity = False
 
 
-class DatasourceLayerF(factory.Factory):
-    FACTORY_FOR = models.DatasourceLayer
+class DatasourceLayerF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.DatasourceLayer
 
     datasource_model = factory.SubFactory(DatasourceModelF)
 
 
-class AugmentedDataSourceF(factory.Factory):
-    FACTORY_FOR = models.AugmentedDataSource
+class AugmentedDataSourceF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.AugmentedDataSource
 
     augmented_source = factory.SubFactory(DatasourceModelF)
     name = "test-augmented-source"
 
 
-class ColorMapF(factory.Factory):
-    FACTORY_FOR = models.ColorMap
+class ColorMapF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ColorMap
 
     name = "kleurprojectie"
 
 
-class ColorFromLatestValueF(factory.Factory):
-    FACTORY_FOR = models.ColorFromLatestValue
+class ColorFromLatestValueF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ColorFromLatestValue
 
     augmented_source = factory.SubFactory(AugmentedDataSourceF)
 
 
-class ColorMapLineF(factory.Factory):
-    FACTORY_FOR = models.ColorMapLine
+class ColorMapLineF(factory.DjangoModelFactory):
+    class Meta:
+        model = models.ColorMapLine
 
     colormap = factory.SubFactory(ColorMapF)
     minvalue = 0.0
