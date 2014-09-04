@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     'lizard_datasource',
     'lizard_security',
     'lizard_ui',
-    'staticfiles',
+    'django.contrib.staticfiles',
     'compressor',
     'south',
     'django_extensions',
@@ -42,7 +42,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.media",
     # Needs to be added for django-staticfiles to allow you to use
     # {{ STATIC_URL }}myapp/my.css in your templates.
-    'staticfiles.context_processors.static_url',
+    'django.core.context_processors.static',
     )
 
 # Language code for this installation. All choices can be found here:
