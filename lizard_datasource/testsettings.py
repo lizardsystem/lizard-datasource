@@ -104,6 +104,8 @@ MAP_SETTINGS = {
 DEFAULT_START_DAYS = -20
 DEFAULT_END_DAYS = 5
 
+SECRET_KEY = "Does not need to be secret"
+
 try:
     # Import local settings that aren't stored in svn.
     from lizard_datasource.local_testsettings import *
