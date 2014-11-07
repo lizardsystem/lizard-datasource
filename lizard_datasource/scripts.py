@@ -89,15 +89,15 @@ def cache_latest_values(ds, allow_cache=True):
                 start_datetime=start_datetime,
                 end_datetime=dates.utc_now())
             if timeseries is None or len(timeseries) == 0:
-                logger.info("Didn't find new latest value for ds layer %s"
-                            "and location %s",
-                            datasource_layer, location)
+                logger.info("Didn't find new latest value for ds layer %s "
+                            "and location %s since %s",
+                            datasource_layer, location, start_datetime)
                 continue
 
             latest = timeseries.latest()
             ds_cache.timestamp = latest.keys()[0]
             ds_cache.value = latest[0]
-            logger.info("Found new latest value for ds layer %s"
+            logger.info("Found new latest value for ds layer %s "
                         "and location %s: %s",
                             datasource_layer, location, latest[0])
             ds_cache.save()
