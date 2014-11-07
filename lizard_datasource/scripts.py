@@ -24,18 +24,18 @@ def _yield_drawable_datasources(ds):
             yield ds
         else:
             criteria = ds.chooseable_criteria()
-            logger.debug("choices_made: %s", choices_made)
+            # logger.debug("choices_made: %s", choices_made)
             if criteria:
                 criterion = criteria[0]['criterion']
-                logger.debug("criterion: %s", criterion)
+                # logger.debug("criterion: %s", criterion)
                 options = criteria[0]['options']
                 for option in options.iter_options():
-                    logger.debug("choice: %s", option)
+                    # logger.debug("choice: %s", option)
                     choices_mades.append(choices_made.add(
                             criterion.identifier, option.identifier))
 
 
-def cache_latest_values(ds):
+def cache_latest_values(ds, allow_cache=True):
     """IF the datasource has both LAYER_POINTS and
     DATA_CAN_HAVE_VALUE_LAYER_SCRIPT source, then we can make an
     instance of DatasourceLayer for each of its layers, get a
@@ -49,7 +49,7 @@ def cache_latest_values(ds):
         return  # For now, we don't know what to do in this case
 
     # Only actually do something if the script is due.
-    if not ds.activation_for_cache_script():
+    if allow_cache and not ds.activation_for_cache_script():
         logger.info("Datasource %s isn't due for action yet, skipping it.",
                     ds)
         return
@@ -79,7 +79,7 @@ def cache_latest_values(ds):
                     datasource_layer=datasource_layer,
                     locationid=location.identifier)
 
-            if ds_cache.timestamp:
+            if ds_cache.timestamp and allow_cache:
                 start_datetime = ds_cache.timestamp
             else:
                 start_datetime = dates.utc_now() - datetime.timedelta(days=4)
