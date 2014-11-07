@@ -2,6 +2,7 @@
 from __future__ import print_function, unicode_literals
 from __future__ import absolute_import, division
 
+from optparse import make_option
 import logging
 
 from django.core.management.base import BaseCommand
@@ -19,10 +20,19 @@ class Command(BaseCommand):
     helpful for things like colouring map layers, thresholding, and
     similar functionality."""
 
+    option_list = BaseCommand.option_list + (
+        make_option('--no-cache',
+                    dest='no_cache',
+                    action="store_true",
+                    default=False,
+                    help="Ignore lizard-datasource caching"),
+    )
+
     def handle(self, *args, **options):
         for ds in datasource.datasources_from_entrypoints():
             try:
-                scripts.cache_latest_values(ds)
+                scripts.cache_latest_values(
+                    ds, allow_cache=(options['no_cache'] == False))
             except:
                 logger.exception(
                     'Exception for datasource {0}, skipping it'.format(ds))
