@@ -50,7 +50,10 @@ def cache_latest_values(ds):
 
     # Only actually do something if the script is due.
     if not ds.activation_for_cache_script():
+        logger.info("Datasource %s isn't due for action yet, skipping it.",
+                    ds)
         return
+    logger.info("Caching latest values for datasource %s", ds)
 
     for drawable in _yield_drawable_datasources(ds):
         # This creates the datasource layer in the database, if it
@@ -86,11 +89,16 @@ def cache_latest_values(ds):
                 start_datetime=start_datetime,
                 end_datetime=dates.utc_now())
             if timeseries is None or len(timeseries) == 0:
+                logger.info("Didn't find new latest value for ds layer %s"
+                            "and location %s",
+                            datasource_layer, location)
                 continue
 
             latest = timeseries.latest()
-
             ds_cache.timestamp = latest.keys()[0]
             ds_cache.value = latest[0]
+            logger.info("Found new latest value for ds layer %s"
+                        "and location %s: %s",
+                            datasource_layer, location, latest[0])
             ds_cache.save()
             time.sleep(1)

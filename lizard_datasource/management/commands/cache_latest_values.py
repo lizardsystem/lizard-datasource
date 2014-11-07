@@ -21,8 +21,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         for ds in datasource.datasources_from_entrypoints():
-            logger.info("Caching for datasourse %s", ds)
             try:
                 scripts.cache_latest_values(ds)
             except:
-                logger.exception('skipping datasource {0}'.format(ds))
+                logger.exception(
+                    'Exception for datasource {0}, skipping it'.format(ds))
