@@ -83,8 +83,15 @@ class IdentifierMappingAdmin(admin.ModelAdmin):
     inlines = [IdentifierMappingLineInline]
 
 
+class DatasourceCacheAdmin(admin.ModelAdmin):
+    list_display = [
+        'datasource_layer', 'locationid', 'timestamp', 'value']
+
+
 admin.site.register(models.DatasourceModel, DatasourceModelAdmin)
 admin.site.register(models.DatasourceLayer, DatasourceLayerAdmin)
 admin.site.register(models.AugmentedDataSource, AugmentedDataSourceAdmin)
 admin.site.register(models.ColorMap, ColorMapAdmin)
 admin.site.register(models.IdentifierMapping, IdentifierMappingAdmin)
+
+admin.site.register(models.DatasourceCache, DatasourceCacheAdmin)
