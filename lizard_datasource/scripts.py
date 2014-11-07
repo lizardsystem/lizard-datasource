@@ -79,7 +79,7 @@ def cache_latest_values(ds):
             if cache.timestamp:
                 start_datetime = cache.timestamp
             else:
-                start_datetime = dates.utc_now() - datetime.timedelta(days=6)
+                start_datetime = dates.utc_now() - datetime.timedelta(days=4)
 
             timeseries = drawable.timeseries(
                 location.identifier,
