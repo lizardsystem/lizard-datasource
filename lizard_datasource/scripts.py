@@ -24,13 +24,13 @@ def _yield_drawable_datasources(ds):
             yield ds
         else:
             criteria = ds.chooseable_criteria()
-            print("CHOICES_MADE: {0}".format(choices_made))
+            logger.debug("choices_made: %s", choices_made)
             if criteria:
                 criterion = criteria[0]['criterion']
-                print("CRITERION: {0}".format(criterion))
+                logger.debug("criterion: %s", criterion)
                 options = criteria[0]['options']
                 for option in options.iter_options():
-                    print("CHOICE: {0}".format(option))
+                    logger.debug("choice: %s", option)
                     choices_mades.append(choices_made.add(
                             criterion.identifier, option.identifier))
 
