@@ -68,16 +68,16 @@ def cache_latest_values(ds):
         locations = drawable.locations()
         for location in locations:
             try:
-                cache = models.DatasourceCache.objects.get(
+                ds_cache = models.DatasourceCache.objects.get(
                     datasource_layer=datasource_layer,
                     locationid=location.identifier)
             except models.DatasourceCache.DoesNotExist:
-                cache = models.DatasourceCache(
+                ds_cache = models.DatasourceCache(
                     datasource_layer=datasource_layer,
                     locationid=location.identifier)
 
-            if cache.timestamp:
-                start_datetime = cache.timestamp
+            if ds_cache.timestamp:
+                start_datetime = ds_cache.timestamp
             else:
                 start_datetime = dates.utc_now() - datetime.timedelta(days=4)
 
@@ -90,7 +90,7 @@ def cache_latest_values(ds):
 
             latest = timeseries.latest()
 
-            cache.timestamp = latest.keys()[0]
-            cache.value = latest[0]
-            cache.save()
+            ds_cache.timestamp = latest.keys()[0]
+            ds_cache.value = latest[0]
+            ds_cache.save()
             time.sleep(1)
