@@ -10,8 +10,8 @@ long_description = '\n\n'.join([
 
 install_requires = [
     'Django',
-    'lizard-map >= 4.0a1',
-    'lizard-ui >= 4.0a1',
+    'lizard-map >= 5.0',
+    'lizard-ui >= 5.0',
     'lizard-security',
     'lizard-fewsjdbc',
     'django-nose',
