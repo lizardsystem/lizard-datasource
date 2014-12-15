@@ -14,6 +14,10 @@ Changelog of lizard-datasource
 
 - Test for to_csv(..) function.  
 
+- Adding admin page for cached latest values.
+
+- Logging fixes.
+  
 
 0.12 (2013-06-06)
 -----------------
