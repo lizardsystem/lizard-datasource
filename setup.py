@@ -13,7 +13,7 @@ install_requires = [
     'lizard-map >= 5.0',
     'lizard-ui >= 5.0',
     'lizard-security',
-    'lizard-fewsjdbc',
+    'lizard-fewsjdbc >= 3.0',
     'django-nose',
     'setuptools',
     'mock',
