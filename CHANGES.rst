@@ -2,7 +2,7 @@ Changelog of lizard-datasource
 ===================================================
 
 
-1.1 (unreleased)
+1.1 (2014-12-15)
 ----------------
 
 - Nothing changed yet.
