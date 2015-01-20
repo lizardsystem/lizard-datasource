@@ -35,6 +35,20 @@ hour). This amount can be changed in the admin interface, and a single
 run can also be request as an action.
 
 
+Solution for missing datasource layers
+--------------------------------------
+
+- Create an augmented datasource yourself.
+
+- A datasource model is then made. Set this one to "visible".
+
+- Visit the ``/fancy`` fancylayers page. Click several parameters, this causes
+  missing datasource layers to be created.
+
+- Afterwards you can rename the datasource layers and edit them in the
+  augmented datasource (for colors and so).
+
+
 Idea
 ----
 
